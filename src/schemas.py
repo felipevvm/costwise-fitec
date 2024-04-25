@@ -5,6 +5,10 @@ from .models import User, Project, Member, Task, Product
 ma = Marshmallow()
 
 
+class EmptySchema(ma.Schema):
+    pass
+
+
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User

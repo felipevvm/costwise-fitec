@@ -1,8 +1,12 @@
 import os
 
 from flask import Flask
+from apifairy import APIFairy
+
 from .models import db
 from .schemas import ma
+
+apif = APIFairy()
 
 URL_PREFIX = '/api/v1/'
 
@@ -23,11 +27,10 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Database
+    # Extensions
     db.init_app(app)
-
-    # Schemas
     ma.init_app(app)
+    apif.init_app(app)
 
     # Blueprints
     from src.users import users

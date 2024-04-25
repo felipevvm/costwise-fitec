@@ -1,8 +1,15 @@
 import enum
 
+from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
+
+class Updateable:
+    def update(self, data):
+        for attr, value in data.items():
+            setattr(self, attr, value)
 
 
 user_project = db.Table('user_project',
@@ -10,7 +17,7 @@ user_project = db.Table('user_project',
                         db.Column('project_id', db.Integer, db.ForeignKey('project.id'), primary_key=True))
 
 
-class User(db.Model):
+class User(Updateable, db.Model):
     __tablename__ = "user"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -18,8 +25,12 @@ class User(db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
 
+    @property
+    def url(self):
+        return url_for('users.get_user', id=self.id)
+
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return '<User {}-{}>'.format(self.id, self.username)
 
 
 class Project(db.Model):
