@@ -18,7 +18,8 @@ class User(db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
 
-    projects = db.relationship('project', secondary=user_project, backref='users')
+    def __repr__(self):
+        return '<User {}>'.format(self.username)
 
 
 class Project(db.Model):
@@ -33,9 +34,10 @@ class Project(db.Model):
     total_cost_other = db.Column(db.Integer)
     total_time_tasks = db.Column(db.DateTime)
 
-    members = db.relationship('member', backref='project')
-    tasks = db.relationship('task', backref='project')
-    products = db.relationship('product', backref='project')
+    members = db.relationship('Member', backref='project')
+    tasks = db.relationship('Task', backref='project')
+    products = db.relationship('Product', backref='project')
+    users = db.relationship('User', secondary=user_project, backref='projects')
 
 
 member_task = db.Table('member_task',
@@ -63,6 +65,7 @@ class Task(db.Model):
     deadline = db.Column(db.Date)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    members = db.relationship('Member', secondary=member_task, backref='tasks')
 
 
 class ProductType(enum.Enum):

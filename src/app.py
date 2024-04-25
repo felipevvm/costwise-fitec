@@ -2,6 +2,9 @@ import os
 
 from flask import Flask
 from .models import db
+from .schemas import ma
+
+URL_PREFIX = '/api/v1/'
 
 
 def create_app(test_config=None):
@@ -23,8 +26,11 @@ def create_app(test_config=None):
     # Database
     db.init_app(app)
 
+    # Schemas
+    ma.init_app(app)
+
     # Blueprints
     from src.users import users
-    app.register_blueprint(users, url_prefix='/api')
+    app.register_blueprint(users, url_prefix=URL_PREFIX)
 
     return app
