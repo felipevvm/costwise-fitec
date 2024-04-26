@@ -1,0 +1,8 @@
+
+SECRET_KEY = 'dev'
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+DEBUG = False
+
+APIFAIRY_TITLE = 'CostWise Fitec API'
+APIFAIRY_VERSION = '1.0'
+APIFAIRY_UI = 'swagger_ui'
