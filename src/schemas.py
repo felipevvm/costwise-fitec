@@ -9,11 +9,19 @@ class EmptySchema(ma.Schema):
     pass
 
 
-class UserSchema(ma.SQLAlchemyAutoSchema):
+class UserSchema(ma.SQLAlchemySchema):
     class Meta:
         model = User
         include_fk = True
         include_relationships = True
+        ordered = True
+
+    id = ma.auto_field(dump_only=True)
+    email = ma.auto_field(required=True)
+    username = ma.auto_field(required=True)
+    # noinspection PyUnresolvedReferences
+    password = ma.String(required=True, load_only=True)
+    projects = ma.auto_field(dump_only=True, load_only=True)
 
 
 class ProjectSchema(ma.SQLAlchemyAutoSchema):
