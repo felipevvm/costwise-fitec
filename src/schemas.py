@@ -1,6 +1,7 @@
 from flask_marshmallow import Marshmallow
+from marshmallow_enum import EnumField
 
-from .models import User, Project, Member, Task, Product
+from .models import User, Project, Member, Task, Product, ProductType
 
 ma = Marshmallow()
 
@@ -50,3 +51,5 @@ class ProductSchema(ma.SQLAlchemyAutoSchema):
         model = Product
         include_fk = True
         include_relationships = True
+
+    type = EnumField(ProductType)

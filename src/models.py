@@ -50,6 +50,7 @@ class Project(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name_project = db.Column(db.String(255), nullable=False)
+    description_project = db.Column(db.String(500))
     deadline = db.Column(db.Date)
     budget = db.Column(db.Integer)
     total_cost_software = db.Column(db.Integer)
@@ -84,7 +85,7 @@ class Task(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name_task = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.String(500))
+    description_task = db.Column(db.String(500))
     deadline = db.Column(db.Date)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
@@ -92,9 +93,9 @@ class Task(db.Model):
 
 
 class ProductType(enum.Enum):
-    HARDWARE = 'Hardware'
-    SOFTWARE = 'Software'
-    OTHER = 'Other'
+    HARDWARE = 'HARDWARE'
+    SOFTWARE = 'SOFTWARE'
+    OTHER = 'OTHER'
 
 
 class Product(db.Model):
@@ -104,7 +105,7 @@ class Product(db.Model):
     name_product = db.Column(db.String(255), nullable=False)
     cost = db.Column(db.Integer, nullable=False)
     license = db.Column(db.Boolean, nullable=False)
-    type = db.Column(db.Enum(ProductType))
+    type = db.Column(db.Enum(ProductType), nullable=False)
     amount = db.Column(db.Integer)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
