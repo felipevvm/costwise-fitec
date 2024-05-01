@@ -35,5 +35,6 @@ def create_app(test_config=None):
     # Blueprints
     from src.users import users
     app.register_blueprint(users, url_prefix=URL_PREFIX)
-
+    from src.tokens import tokens
+    app.register_blueprint(tokens, url_prefix=URL_PREFIX)
     return app
