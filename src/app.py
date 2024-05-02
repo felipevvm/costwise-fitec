@@ -6,7 +6,7 @@ from apifairy import APIFairy
 from .models import db
 from .schemas import ma
 
-apif = APIFairy()
+af = APIFairy()
 
 URL_PREFIX = '/api/v1/'
 
@@ -30,10 +30,11 @@ def create_app(test_config=None):
     # Extensions
     db.init_app(app)
     ma.init_app(app)
-    apif.init_app(app)
+    af.init_app(app)
 
     # Blueprints
     from src.users import users
     app.register_blueprint(users, url_prefix=URL_PREFIX)
-
+    from src.tokens import tokens
+    app.register_blueprint(tokens, url_prefix=URL_PREFIX)
     return app

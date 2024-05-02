@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, jsonify
+from flask import Blueprint, abort
 from apifairy import response, body, other_responses
 
 from .models import User, db
@@ -11,6 +11,13 @@ update_user_schema = UserSchema(partial=True)
 users_schema = UserSchema(many=True)
 
 
+@users.route('/users', methods=['GET'])
+@response(users_schema)
+def all_users():
+    """Shows all users"""
+    return User.query.all()
+
+
 @users.route('/users', methods=['POST'])
 @body(user_schema)
 @response(user_schema, 201)
@@ -20,16 +27,6 @@ def new_user(args):
     db.session.add(user)
     db.session.commit()
     return user
-
-
-@users.route('/users', methods=['GET'])
-@response(users_schema)
-def all_users():
-    """Shows all users"""
-    return User.query.all()
-    # all_users_query = User.query.all()
-    # result = users_schema.dump(all_users_query)
-    # return jsonify(result)
 
 
 @users.route('/users/<int:user_id>', methods=['GET'])
