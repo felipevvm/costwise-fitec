@@ -7,7 +7,7 @@ from flask import url_for, current_app
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-db = SQLAlchemy()
+from .extensions import db
 
 
 class Updateable:
@@ -57,7 +57,6 @@ class Token(db.Model):
 
     @staticmethod
     def from_jwt(access_token_jwt):
-        access_token = None
         try:
             access_token = jwt.decode(access_token_jwt,
                                       current_app.config['SECRET_KEY'],

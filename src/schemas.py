@@ -1,6 +1,7 @@
 from flask_marshmallow import Marshmallow
 from marshmallow_enum import EnumField
 
+from .extensions import ma
 from .models import User, Project, Member, Task, Product, ProductType
 
 ma = Marshmallow()

@@ -1,6 +1,7 @@
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 
-from src.models import User, db
+from .extensions import db
+from .models import User
 
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()

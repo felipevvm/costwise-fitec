@@ -1,8 +1,10 @@
 from flask import Blueprint, abort
-from apifairy import response, body, other_responses
+from apifairy import authenticate, response, body, other_responses
 
-from .models import User, db
-from .schemas import UserSchema, EmptySchema
+from src.extensions import db
+from src.auth import token_auth
+from src.models import User
+from src.schemas import UserSchema, EmptySchema
 
 users = Blueprint('users', __name__)
 

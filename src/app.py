@@ -3,10 +3,7 @@ import os
 from flask import Flask
 from apifairy import APIFairy
 
-from .models import db
-from .schemas import ma
-
-af = APIFairy()
+from .extensions import db, ma, af
 
 URL_PREFIX = '/api/v1/'
 
@@ -33,8 +30,8 @@ def create_app(test_config=None):
     af.init_app(app)
 
     # Blueprints
-    from src.users import users
+    from .blueprints.users import users
     app.register_blueprint(users, url_prefix=URL_PREFIX)
-    from src.tokens import tokens
+    from .blueprints.tokens import tokens
     app.register_blueprint(tokens, url_prefix=URL_PREFIX)
     return app

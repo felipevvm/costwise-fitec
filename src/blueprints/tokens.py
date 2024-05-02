@@ -1,8 +1,9 @@
 from flask import Blueprint, abort, current_app, request
 from apifairy import authenticate, response, other_responses, body
 
+from src.extensions import db
 from src.auth import basic_auth, token_auth
-from src.models import User, Token, db
+from src.models import User, Token
 from src.schemas import TokenSchema, EmptySchema
 
 tokens = Blueprint('tokens', __name__)

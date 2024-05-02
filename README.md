@@ -35,4 +35,4 @@ flask --app src run
 flask --app src run --debug
 ```
 
-### Documentation on the endpoint "/docs"
+### Documentação para testar os endpoints em "/docs"
