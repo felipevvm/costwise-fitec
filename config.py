@@ -11,4 +11,4 @@ REFRESH_TOKEN_IN_BODY = True
 APIFAIRY_TITLE = 'CostWise Fitec API'
 APIFAIRY_VERSION = '1.0'
 APIFAIRY_UI = 'swagger_ui'
-APIFAIRY_TAGS = ['tokens', 'users']
+APIFAIRY_TAGS = ['tokens', 'users', 'projects']

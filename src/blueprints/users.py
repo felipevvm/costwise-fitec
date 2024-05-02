@@ -9,8 +9,8 @@ from src.schemas import UserSchema, EmptySchema
 users = Blueprint('users', __name__)
 
 user_schema = UserSchema()
-update_user_schema = UserSchema(partial=True)
 users_schema = UserSchema(many=True)
+update_user_schema = UserSchema(partial=True)
 
 
 @users.route('/users', methods=['GET'])
@@ -40,23 +40,25 @@ def get_user(user_id):
 
 
 @users.route('/users/<int:user_id>', methods=['PUT'])
+@authenticate(token_auth)
 @body(update_user_schema)
 @response(user_schema)
 @other_responses({404: 'User not found'})
-def update_user(data, user_id):
+def update_user(data):
     """Update user data"""
-    user = db.session.get(User, user_id) or abort(404)
+    user = token_auth.current_user() or abort(404)
     user.update(data)
     db.session.commit()
     return user
 
 
 @users.route('/users/<int:user_id>', methods=['DELETE'])
+@authenticate(token_auth)
 @response(EmptySchema, 204, description='User deleted')
 @other_responses({404: 'User not found'})
-def delete_user(user_id):
+def delete_user():
     """Delete a user by id"""
-    user = db.session.get(User, user_id) or abort(404)
+    user = token_auth.current_user() or abort(404)
     db.session.delete(user)
     db.session.commit()
     return {}

@@ -4,7 +4,6 @@ import secrets
 
 import jwt
 from flask import url_for, current_app
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .extensions import db
@@ -14,11 +13,6 @@ class Updateable:
     def update(self, data):
         for attr, value in data.items():
             setattr(self, attr, value)
-
-
-user_project = db.Table('user_project',
-                        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                        db.Column('project_id', db.Integer, db.ForeignKey('project.id'), primary_key=True))
 
 
 class Token(db.Model):
@@ -74,6 +68,8 @@ class User(Updateable, db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255))
 
+    projects = db.relationship('Project', backref='owner')
+
     @property
     def url(self):
         return url_for('users.get_user', id=self.id)
@@ -121,7 +117,7 @@ class User(Updateable, db.Model):
         db.session.commit()
 
 
-class Project(db.Model):
+class Project(Updateable, db.Model):
     __tablename__ = "project"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -129,15 +125,20 @@ class Project(db.Model):
     description_project = db.Column(db.String(500))
     deadline = db.Column(db.Date)
     budget = db.Column(db.Integer)
-    total_cost_software = db.Column(db.Integer)
-    total_cost_hardware = db.Column(db.Integer)
-    total_cost_other = db.Column(db.Integer)
+    total_cost_products = db.Column(db.Integer)
     total_time_tasks = db.Column(db.DateTime)
 
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     members = db.relationship('Member', backref='project')
     tasks = db.relationship('Task', backref='project')
     products = db.relationship('Product', backref='project')
-    users = db.relationship('User', secondary=user_project, backref='projects')
+
+    @property
+    def url(self):
+        return url_for('projects.get_project', id=self.id)
+
+    def __repr__(self):
+        return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id.username)
 
 
 member_task = db.Table('member_task',

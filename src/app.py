@@ -1,7 +1,6 @@
 import os
 
 from flask import Flask
-from apifairy import APIFairy
 
 from .extensions import db, ma, af
 
@@ -34,4 +33,9 @@ def create_app(test_config=None):
     app.register_blueprint(users, url_prefix=URL_PREFIX)
     from .blueprints.tokens import tokens
     app.register_blueprint(tokens, url_prefix=URL_PREFIX)
+    from .blueprints.projects import projects
+    app.register_blueprint(projects, url_prefix=URL_PREFIX)
+    from .blueprints.products import products
+    app.register_blueprint(products, url_prefix=URL_PREFIX)
+
     return app

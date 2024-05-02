@@ -1,10 +1,7 @@
-from flask_marshmallow import Marshmallow
 from marshmallow_enum import EnumField
 
 from .extensions import ma
 from .models import User, Project, Member, Task, Product, ProductType
-
-ma = Marshmallow()
 
 
 class EmptySchema(ma.Schema):
@@ -32,7 +29,7 @@ class UserSchema(ma.SQLAlchemySchema):
     email = ma.auto_field(required=True)
     username = ma.auto_field(required=True)
     password = ma.String(required=True, load_only=True)
-    projects = ma.auto_field(dump_only=True, load_only=True)
+    projects = ma.Nested(lambda: ProjectSchema, only=['id', 'name_project'], many=True, dump_only=True)
 
 
 class ProjectSchema(ma.SQLAlchemyAutoSchema):
@@ -40,6 +37,21 @@ class ProjectSchema(ma.SQLAlchemyAutoSchema):
         model = Project
         include_fk = True
         include_relationships = True
+        ordered = True
+
+    id = ma.auto_field(dump_only=True)
+    name_project = ma.auto_field(required=True)
+    description_project = ma.auto_field()
+    deadline = ma.auto_field(required=True)
+    budget = ma.auto_field(dump_only=True)
+    total_cost_products = ma.auto_field(dump_only=True)
+    total_time_tasks = ma.auto_field(dump_only=True)
+
+    owner = ma.Nested(UserSchema, only=['username', 'email'], dump_only=True)
+    user_id = ma.auto_field(dump_only=True, load_only=True)
+    members = ma.auto_field(dump_only=True)
+    products = ma.auto_field(dump_only=True)
+    tasks = ma.auto_field(dump_only=True)
 
 
 class MemberSchema(ma.SQLAlchemyAutoSchema):
