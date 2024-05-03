@@ -1,112 +1,89 @@
-from flask import Blueprint, jsonify, request, abort, url_for
-from apifairy import response, body, other_responses
-from .models import Product, ProductType, db
-from .schemas import ProductSchema, EmptySchema
+from flask import Blueprint, abort
+from apifairy import authenticate, response, body, other_responses
+
+from src.extensions import db
+from src.auth import token_auth
+from src.models import Product, Project
+from src.schemas import ProductSchema, EmptySchema
 
 products = Blueprint('products', __name__)
 
-@products_bp.route('/products', methods=['POST'])
-def create_product():
-    data = request.get_json()
-    if not data:
-        abort(400, description="No data provided")
-
-    try:
-        new_product = Product(
-            name_product=data['name_product'],
-            cost=data['cost'],
-            license=data['license'],
-            type=ProductType[data['type']],  # Enum type
-            amount=data.get('amount', 0),
-            project_id=data['project_id']
-        )
-        db.session.add(new_product)
-        db.session.commit()
-
-        return jsonify({
-            'id': new_product.id,
-            'name_product': new_product.name_product,
-            'cost': new_product.cost,
-            'license': new_product.license,
-            'type': new_product.type.name,
-            'amount': new_product.amount,
-            'project_id': new_product.project_id,
-            'url': url_for('products.get_product', id=new_product.id)
-        }), 201
-    except KeyError:
-        abort(400, description="Missing required field")
-
-@products_bp.route('/products', methods=['GET'])
-def get_products():
-    products = Product.query.all()
-    return jsonify([{
-        'id': p.id,
-        'name_product': p.name_product,
-        'cost': p.cost,
-        'license': p.license,
-        'type': p.type.name,
-        'amount': p.amount,
-        'project_id': p.project_id,
-        'url': url_for('products.get_product', id=p.id)
-    } for p in products])
-
-@products_bp.route('/products/<int:id>', methods=['GET'])
-def get_product(id):
-    product = Product.query.get(id)
-    if not product:
-        abort(404, description="Product not found")
-
-    return jsonify({
-        'id': product.id,
-        'name_product': product.name_product,
-        'cost': product.cost,
-        'license': product.license,
-        'type': product.type.name,
-        'amount': product.amount,
-        'project_id': product.project_id,
-        'url': url_for('products.get_product', id=product.id)
-    })
-
-@products_bp.route('/products/<int:id>', methods=['PUT'])
-def update_product(id):
-    product = Product.query.get(id)
-    if not product:
-        abort(404, description="Product not found")
-
-    data = request.get_json()
-    if not data:
-        abort(400, description="No data provided")
-
-    try:
-        product.name_product = data.get('name_product', product.name_product)
-        product.cost = data.get('cost', product.cost)
-        product.license = data.get('license', product.license)
-        product.type = ProductType[data.get('type', product.type.name)]
-        product.amount = data.get('amount', product.amount)
-
-        db.session.commit()
-
-        return jsonify({
-            'id': product.id,
-            'name_product': product.name_product,
-            'cost': product.cost,
-            'license': product.license,
-            'type': product.type.name,
-            'amount': product.amount,
-            'project_id': product.project_id,
-            'url': url_for('products.get_product', id=product.id)
-        })
-    except KeyError:
-        abort(400, description="Invalid data field")
+product_schema = ProductSchema()
+products_schema = ProductSchema(many=True)
+update_product_schema = ProductSchema(partial=True)
 
 
-@products_bp.route('/products/<int:id>', methods=['DELETE'])
-def delete_product(id):
-    product = Product.query.get(id)
-    if not product:
-        abort(404, description="Product not found")
+@products.route('/products', methods=['POST'])
+@authenticate(token_auth)
+@body(product_schema)
+@response(product_schema)
+@other_responses({404: 'Project not found', 401: 'User not allowed'})
+def new_product(args, project_id):
+    """Create a new Product"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    product = Product(project=project, **args)
+    db.session.add(product)
+    db.session.commit()
+    return product
 
+
+@products.route('/products', methods=['GET'])
+@authenticate(token_auth)
+@response(products_schema)
+@other_responses({404: 'Project not found', 401: 'User not allowed'})
+def get_products(project_id):
+    """Return all Products"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    return project.products
+
+
+@products.route('/products/<int:product_id>', methods=['GET'])
+@authenticate(token_auth)
+@response(product_schema)
+@other_responses({404: 'Project or Product not found', 401: 'User not allowed'})
+def get_product(project_id, product_id):
+    """Return a Product by id"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    return db.session.get(Product, product_id) or abort(404)
+
+
+@products.route('/products/<int:product_id>', methods=['PUT'])
+@authenticate(token_auth)
+@response(product_schema)
+@other_responses({404: 'Project or Product not found', 401: 'User not allowed'})
+def update_product(data, project_id, product_id):
+    """Update a Product by id"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    product = db.session.get(Product, product_id) or abort(404)
+    product.update(data)
+    db.session.add(product)
+    db.session.commit()
+    return product
+
+
+@products.route('/products/<int:product_id>', methods=['DELETE'])
+@authenticate(token_auth)
+@response(EmptySchema, 204, description='Product deleted')
+@other_responses({404: 'Project or Product not found', 401: 'User not allowed'})
+def delete_product(project_id, product_id):
+    """Delete a Product by id"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    product = db.session.get(Product, product_id) or abort(404)
     db.session.delete(product)
     db.session.commit()
-
-    return '', 204
+    return {}

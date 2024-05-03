@@ -5,8 +5,15 @@ from src.extensions import db
 from src.auth import token_auth
 from src.models import Project
 from src.schemas import ProjectSchema, EmptySchema
+from .products import products
+from .members import members
+from .tasks import tasks
 
 projects = Blueprint('projects', __name__)
+
+projects.register_blueprint(products, url_prefix='project/<int:project_id>')
+projects.register_blueprint(members, url_prefix='project/<int:project_id>')
+projects.register_blueprint(tasks, url_prefix='project/<int:project_id>')
 
 project_schema = ProjectSchema()
 projects_schema = ProjectSchema(many=True)
@@ -38,7 +45,7 @@ def get_projects():
 @projects.route('/projects/<int:project_id>', methods=['GET'])
 @authenticate(token_auth)
 @response(project_schema)
-@other_responses({404: 'Project Not found', 401: 'User not allow to view this project'})
+@other_responses({404: 'Project not found', 401: 'User not allow to view this project'})
 def get_project(project_id):
     """Return a Project by id"""
     user = token_auth.current_user()
@@ -52,28 +59,28 @@ def get_project(project_id):
 @authenticate(token_auth)
 @body(update_project_schema)
 @response(project_schema)
-@other_responses({404: 'Project Not found', 401: 'User not allow to edit this project'})
+@other_responses({404: 'Project not found', 401: 'User not allow to edit this project'})
 def update_project(data, project_id):
     """Update Project data"""
     user = token_auth.current_user()
     project = db.session.get(Project, project_id) or abort(404)
-    if project.user_id == user.id:
-        project.update(data)
-        db.session.commit()
-        return project
-    abort(401)
+    if not project.user_id == user.id:
+        abort(401)
+    project.update(data)
+    db.session.commit()
+    return project
 
 
 @projects.route('/projects/<int:project_id>', methods=['DELETE'])
 @authenticate(token_auth)
-@response(EmptySchema)
-@other_responses({404: 'Project Not found', 401: 'User not allow to delete this project'})
+@response(EmptySchema, 204, description='Project deleted')
+@other_responses({404: 'Project not found', 401: 'User not allow to delete this project'})
 def delete_project(project_id):
     """Delete a Project by id"""
     user = token_auth.current_user()
     project = db.session.get(Project, project_id) or abort(404)
-    if project.user_id == user.id:
-        db.session.delete(project)
-        db.session.commit()
-        return {}
-    abort(401)
+    if not project.user_id == user.id:
+        abort(401)
+    db.session.delete(project)
+    db.session.commit()
+    return {}

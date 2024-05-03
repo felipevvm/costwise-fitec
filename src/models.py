@@ -3,7 +3,7 @@ import enum
 import secrets
 
 import jwt
-from flask import url_for, current_app
+from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .extensions import db
@@ -70,10 +70,6 @@ class User(Updateable, db.Model):
 
     projects = db.relationship('Project', backref='owner')
 
-    @property
-    def url(self):
-        return url_for('users.get_user', id=self.id)
-
     def __repr__(self):
         return '<User {}-{}>'.format(self.id, self.username)
 
@@ -133,12 +129,8 @@ class Project(Updateable, db.Model):
     tasks = db.relationship('Task', backref='project')
     products = db.relationship('Product', backref='project')
 
-    @property
-    def url(self):
-        return url_for('projects.get_project', id=self.id)
-
     def __repr__(self):
-        return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id.username)
+        return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id)
 
 
 member_task = db.Table('member_task',
@@ -146,7 +138,7 @@ member_task = db.Table('member_task',
                        db.Column('task_id', db.Integer, db.ForeignKey('task.id'), primary_key=True))
 
 
-class Member(db.Model):
+class Member(Updateable, db.Model):
     __tablename__ = "member"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -156,8 +148,11 @@ class Member(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
 
+    def __repr__(self):
+        return '<Member {}-{}-{}>'.format(self.id, self.name_member, self.role)
 
-class Task(db.Model):
+
+class Task(Updateable, db.Model):
     __tablename__ = "task"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -168,6 +163,9 @@ class Task(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     members = db.relationship('Member', secondary=member_task, backref='tasks')
 
+    def __repr__(self):
+        return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
+
 
 class ProductType(enum.Enum):
     HARDWARE = 'HARDWARE'
@@ -175,7 +173,7 @@ class ProductType(enum.Enum):
     OTHER = 'OTHER'
 
 
-class Product(db.Model):
+class Product(Updateable, db.Model):
     __tablename__ = "product"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -186,3 +184,6 @@ class Product(db.Model):
     amount = db.Column(db.Integer)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+
+    def __repr__(self):
+        return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
