@@ -3,6 +3,8 @@ from flask import Blueprint, abort, jsonify
 from apifairy import APIFairy
 from apifairy import response, body, other_responses
 
+from .models import Member, db, Updateable
+from .schemas import MemberSchema, EmptySchema
 
 members = Blueprint('members', __name__)
 
@@ -30,7 +32,7 @@ def all_members():
 def get_member(members_id):
     return db.session.get(Member, member_id) or abort(404)
 
-@members.route('/members/<string:member_id>')
+@members.route('/members/<string:member_id>', methods=['GET'])
 @response(member_schema)
 @other_responses({404:'User not found'})
 def get_member(members_id_project):
@@ -40,7 +42,7 @@ def get_member(members_id_project):
 @response(EmptySchema, 204, description='Member deleted')
 @other_responses({404: 'User not found'})
 def delete_member(members_id):
-    user = db.session.get(Member, member_id) or abort(404)
+    member = db.session.get(Member, member_id) or abort(404)
     db.session.delete(member)
     db.session.commit()
     return {}
