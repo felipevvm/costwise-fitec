@@ -1,20 +1,22 @@
 from flask import Blueprint, abort
-from apifairy import response, body, other_responses
+from apifairy import authenticate, response, body, other_responses
 
-from .models import User, db
-from .schemas import UserSchema, EmptySchema
+from src.extensions import db
+from src.auth import token_auth
+from src.models import User
+from src.schemas import UserSchema, EmptySchema
 
 users = Blueprint('users', __name__)
 
 user_schema = UserSchema()
-update_user_schema = UserSchema(partial=True)
 users_schema = UserSchema(many=True)
+update_user_schema = UserSchema(partial=True)
 
 
 @users.route('/users', methods=['GET'])
 @response(users_schema)
-def all_users():
-    """Shows all users"""
+def get_users():
+    """Shows all Users"""
     return User.query.all()
 
 
@@ -33,28 +35,30 @@ def new_user(args):
 @response(user_schema)
 @other_responses({404: 'User not found'})
 def get_user(user_id):
-    """Return a user by id"""
+    """Return a User by id"""
     return db.session.get(User, user_id) or abort(404)
 
 
-@users.route('/users/<int:user_id>', methods=['PUT'])
+@users.route('/users', methods=['PUT'])
+@authenticate(token_auth)
 @body(update_user_schema)
 @response(user_schema)
 @other_responses({404: 'User not found'})
-def update_user(data, user_id):
-    """Update user data"""
-    user = db.session.get(User, user_id) or abort(404)
+def update_user(data):
+    """Update User data"""
+    user = token_auth.current_user() or abort(404)
     user.update(data)
     db.session.commit()
     return user
 
 
-@users.route('/users/<int:user_id>', methods=['DELETE'])
+@users.route('/users', methods=['DELETE'])
+@authenticate(token_auth)
 @response(EmptySchema, 204, description='User deleted')
 @other_responses({404: 'User not found'})
-def delete_user(user_id):
-    """Delete a user by id"""
-    user = db.session.get(User, user_id) or abort(404)
+def delete_user():
+    """Delete a User by id"""
+    user = token_auth.current_user() or abort(404)
     db.session.delete(user)
     db.session.commit()
     return {}

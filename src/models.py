@@ -3,22 +3,16 @@ import enum
 import secrets
 
 import jwt
-from flask import url_for, current_app
-from flask_sqlalchemy import SQLAlchemy
+from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
-db = SQLAlchemy()
+from .extensions import db
 
 
 class Updateable:
     def update(self, data):
         for attr, value in data.items():
             setattr(self, attr, value)
-
-
-user_project = db.Table('user_project',
-                        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                        db.Column('project_id', db.Integer, db.ForeignKey('project.id'), primary_key=True))
 
 
 class Token(db.Model):
@@ -57,7 +51,6 @@ class Token(db.Model):
 
     @staticmethod
     def from_jwt(access_token_jwt):
-        access_token = None
         try:
             access_token = jwt.decode(access_token_jwt,
                                       current_app.config['SECRET_KEY'],
@@ -75,9 +68,7 @@ class User(Updateable, db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255))
 
-    @property
-    def url(self):
-        return url_for('users.get_user', id=self.id)
+    projects = db.relationship('Project', backref='owner')
 
     def __repr__(self):
         return '<User {}-{}>'.format(self.id, self.username)
@@ -122,7 +113,7 @@ class User(Updateable, db.Model):
         db.session.commit()
 
 
-class Project(db.Model):
+class Project(Updateable, db.Model):
     __tablename__ = "project"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -130,15 +121,16 @@ class Project(db.Model):
     description_project = db.Column(db.String(500))
     deadline = db.Column(db.Date)
     budget = db.Column(db.Integer)
-    total_cost_software = db.Column(db.Integer)
-    total_cost_hardware = db.Column(db.Integer)
-    total_cost_other = db.Column(db.Integer)
+    total_cost_products = db.Column(db.Integer)
     total_time_tasks = db.Column(db.DateTime)
 
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     members = db.relationship('Member', backref='project')
     tasks = db.relationship('Task', backref='project')
     products = db.relationship('Product', backref='project')
-    users = db.relationship('User', secondary=user_project, backref='projects')
+
+    def __repr__(self):
+        return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id)
 
 
 member_task = db.Table('member_task',
@@ -146,7 +138,7 @@ member_task = db.Table('member_task',
                        db.Column('task_id', db.Integer, db.ForeignKey('task.id'), primary_key=True))
 
 
-class Member(db.Model):
+class Member(Updateable, db.Model):
     __tablename__ = "member"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -156,8 +148,11 @@ class Member(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
 
+    def __repr__(self):
+        return '<Member {}-{}-{}>'.format(self.id, self.name_member, self.role)
 
-class Task(db.Model):
+
+class Task(Updateable, db.Model):
     __tablename__ = "task"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -168,6 +163,9 @@ class Task(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     members = db.relationship('Member', secondary=member_task, backref='tasks')
 
+    def __repr__(self):
+        return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
+
 
 class ProductType(enum.Enum):
     HARDWARE = 'HARDWARE'
@@ -175,7 +173,7 @@ class ProductType(enum.Enum):
     OTHER = 'OTHER'
 
 
-class Product(db.Model):
+class Product(Updateable, db.Model):
     __tablename__ = "product"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -186,3 +184,6 @@ class Product(db.Model):
     amount = db.Column(db.Integer)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+
+    def __repr__(self):
+        return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
