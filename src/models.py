@@ -152,6 +152,13 @@ class Task(Updateable, db.Model):
     def __repr__(self):
         return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
 
+    def assign_member(self, member):
+        if not self.has_member(member):
+            self.tasks.append(member)
+
+    def has_member(self, member):
+        return member in self.members
+
 
 class Member(Updateable, db.Model):
     __tablename__ = "member"
