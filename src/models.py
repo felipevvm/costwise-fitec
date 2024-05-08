@@ -133,9 +133,24 @@ class Project(Updateable, db.Model):
         return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id)
 
 
-member_task = db.Table('member_task',
-                       db.Column('member_id', db.Integer, db.ForeignKey('member.id'), primary_key=True),
-                       db.Column('task_id', db.Integer, db.ForeignKey('task.id'), primary_key=True))
+task_member = db.Table('member_task',
+                       db.Column('task_id', db.Integer, db.ForeignKey('task.id'), primary_key=True),
+                       db.Column('member_id', db.Integer, db.ForeignKey('member.id'), primary_key=True))
+
+
+class Task(Updateable, db.Model):
+    __tablename__ = "task"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name_task = db.Column(db.String(255), nullable=False)
+    description_task = db.Column(db.String(500))
+    deadline = db.Column(db.Date)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    members = db.relationship('Member', secondary=task_member, backref='tasks')
+
+    def __repr__(self):
+        return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
 
 
 class Member(Updateable, db.Model):
@@ -151,20 +166,12 @@ class Member(Updateable, db.Model):
     def __repr__(self):
         return '<Member {}-{}-{}>'.format(self.id, self.name_member, self.role)
 
+    def assign_task(self, task):
+        if not self.has_task(task):
+            self.tasks.append(task)
 
-class Task(Updateable, db.Model):
-    __tablename__ = "task"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name_task = db.Column(db.String(255), nullable=False)
-    description_task = db.Column(db.String(500))
-    deadline = db.Column(db.Date)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
-    members = db.relationship('Member', secondary=member_task, backref='tasks')
-
-    def __repr__(self):
-        return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
+    def has_task(self, task):
+        return task in self.tasks
 
 
 class ProductType(enum.Enum):
