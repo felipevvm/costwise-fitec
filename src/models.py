@@ -113,6 +113,9 @@ class User(Updateable, db.Model):
         db.session.commit()
 
 
+# verificação do token - redefinir senha
+
+
 class Project(Updateable, db.Model):
     __tablename__ = "project"
 
