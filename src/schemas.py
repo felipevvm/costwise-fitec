@@ -116,4 +116,3 @@ class PasswordResetSchema(ma.Schema):
 
     token = ma.String(required=True)
     new_password = ma.String(required=True, validate=validate.Length(min=3))
-

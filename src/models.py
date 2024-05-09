@@ -120,7 +120,7 @@ class User(Updateable, db.Model):
                 'email': self.email
             },
             current_app.config['SECRET_KEY'],
-            algorithm='HS256'
+            algorithms='HS256'
         )
     
     @staticmethod
@@ -129,12 +129,11 @@ class User(Updateable, db.Model):
             data = jwt.decode(
                 reset_token,
                 current_app.config['SECRET_KEY'],
-                algorithm='HS256'
+                algorithms='HS256'
             )
         except jwt.PyJWKError:
             return
         return db.session.scalar(db.session.query(User).filter_by(email=data['email']))
-
 
 
 class Project(Updateable, db.Model):

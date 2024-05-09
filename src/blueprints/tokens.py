@@ -76,10 +76,9 @@ def revoke_token():
 def request_reset(args):
     """Request a password reset token"""
     user = db.session.scalar(db.session.query(User).filter_by(email=args['email'])) or abort(404)
-    if user is None:
+    if user is not None:
         reset_token = user.generate_reset_token()
-        reset_url = 'http://127.0.0.1:5000/api/v1/tokens/reset/?token=' + reset_token
-        send_email(args['email'], user.username, reset_url)
+        send_email(args['email'], user.username, reset_token)
 
 
 @tokens.route('/tokens/reset', methods=['PUT'])
