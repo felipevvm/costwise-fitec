@@ -44,9 +44,10 @@ class ProjectSchema(ma.SQLAlchemyAutoSchema):
     name_project = ma.auto_field(required=True)
     description_project = ma.auto_field()
     deadline = ma.auto_field(required=True)
+    created_at = ma.auto_field(dump_only=True)
     budget = ma.auto_field(dump_only=True)
     total_cost_products = ma.auto_field(dump_only=True)
-    total_time_tasks = ma.auto_field(dump_only=True)
+    total_cost_members = ma.auto_field(dump_only=True)
 
     owner = ma.Nested(UserSchema, only=['username', 'email'], dump_only=True)
     user_id = ma.auto_field(dump_only=True)
@@ -81,6 +82,7 @@ class TaskSchema(ma.SQLAlchemyAutoSchema):
     name_task = ma.auto_field(required=True)
     description_task = ma.auto_field()
     deadline = ma.auto_field(required=True)
+    created_at = ma.auto_field(dump_only=True)
 
     project_id = ma.auto_field(dump_only=True)
     project = ma.Nested(ProjectSchema, only=['name_project', 'user_id'], dump_only=True)

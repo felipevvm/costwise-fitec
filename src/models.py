@@ -1,5 +1,7 @@
-from datetime import datetime, timedelta
 from time import time
+from datetime import timedelta, date, datetime
+from dateutil import relativedelta
+
 import enum
 import secrets
 
@@ -122,7 +124,7 @@ class User(Updateable, db.Model):
             current_app.config['SECRET_KEY'],
             algorithms='HS256'
         )
-    
+
     @staticmethod
     def verify_reset_token(reset_token):
         try:
@@ -143,9 +145,10 @@ class Project(Updateable, db.Model):
     name_project = db.Column(db.String(255), nullable=False)
     description_project = db.Column(db.String(500))
     deadline = db.Column(db.Date)
-    budget = db.Column(db.Integer)
-    total_cost_products = db.Column(db.Integer)
-    total_time_tasks = db.Column(db.DateTime)
+    created_at = db.Column(db.Date, default=date.today)
+    budget = db.Column(db.DECIMAL)
+    total_cost_products = db.Column(db.DECIMAL)
+    total_cost_members = db.Column(db.DECIMAL)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     members = db.relationship('Member', backref='project')
@@ -154,6 +157,27 @@ class Project(Updateable, db.Model):
 
     def __repr__(self):
         return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id)
+
+    def update_budget(self):
+        self.calc_cost_total_member()
+        self.calc_cost_total_products()
+        self.calc_budget()
+        db.session.add(self)
+        db.session.commit()
+
+    def total_months(self):
+        delta = relativedelta.relativedelta(self.deadline, self.created_at)
+        return delta.months + (delta.years * 12)
+
+    def calc_cost_total_products(self):
+        self.total_cost_products = (Product.calc_license_cost_total(self.id) +
+                                    Product.calc_no_license_cost_total(self.id))
+
+    def calc_cost_total_member(self):
+        self.total_cost_members = Member.calc_total_cost_members(self.id)
+
+    def calc_budget(self):
+        self.budget = self.total_cost_members + self.total_cost_products
 
 
 task_member = db.Table('member_task',
@@ -177,10 +201,14 @@ class Task(Updateable, db.Model):
 
     def assign_member(self, member):
         if not self.has_member(member):
-            self.tasks.append(member)
+            self.members.append(member)
 
     def has_member(self, member):
         return member in self.members
+
+    def total_months(self):
+        delta = relativedelta.relativedelta(self.deadline, self.created_at)
+        return delta.months + (delta.years * 12)
 
 
 class Member(Updateable, db.Model):
@@ -203,6 +231,20 @@ class Member(Updateable, db.Model):
     def has_task(self, task):
         return task in self.tasks
 
+    @staticmethod
+    def calc_total_cost_members(project_id):
+        total_cost = 0
+        members = db.session.get(Project, project_id).members
+        for member in members:
+            longest_task = date.today()
+            longest_task_months = 0
+            for task in member.tasks:
+                if task.deadline > longest_task:
+                    longest_task = task.deadline
+                    longest_task_months = task.total_months()
+            total_cost += member.salary * longest_task_months
+        return total_cost
+
 
 class ProductType(enum.Enum):
     HARDWARE = 'HARDWARE'
@@ -224,3 +266,22 @@ class Product(Updateable, db.Model):
 
     def __repr__(self):
         return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
+
+    @staticmethod
+    def calc_no_license_cost_total(project_id):
+        total_cost = (db.session.query(db.func.sum(Product.cost * Product.amount))
+                      .filter(Product.project_id == project_id, Product.license == 0)
+                      .scalar())
+        if total_cost is not None:
+            return total_cost
+        return 0
+
+    @staticmethod
+    def calc_license_cost_total(project_id):
+        total_months = db.session.get(Project, project_id).total_months()
+        total_cost = (db.session.query(db.func.sum((Product.cost * Product.amount) * total_months))
+                      .filter(Product.project_id == project_id, Product.license == 1)
+                      .scalar())
+        if total_cost is not None:
+            return total_cost
+        return 0

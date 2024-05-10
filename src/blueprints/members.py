@@ -27,6 +27,7 @@ def new_members(args, project_id):
     member = Member(project=project, **args)
     db.session.add(member)
     db.session.commit()
+    project.update_budget()
     return member
 
 
@@ -61,7 +62,7 @@ def get_member(project_id, member_id):
 @response(member_schema)
 @other_responses({404: 'Project or Member not found', 401: 'User not allowed'})
 def update_member(data, project_id, member_id):
-    """Update Task data"""
+    """Update Member data"""
     user = token_auth.current_user()
     project = db.session.get(Project, project_id) or abort(404)
     if not project.user_id == user.id:
@@ -70,6 +71,7 @@ def update_member(data, project_id, member_id):
     member.update(data)
     db.session.add(member)
     db.session.commit()
+    project.update_budget()
     return member
 
 
@@ -78,7 +80,7 @@ def update_member(data, project_id, member_id):
 @response(EmptySchema, 204, description='Member deleted')
 @other_responses({404: 'Project or Member not found', 401: 'User not allowed'})
 def delete_member(project_id, member_id):
-    """Delete a Task by id"""
+    """Delete a Member by id"""
     user = token_auth.current_user()
     project = db.session.get(Project, project_id) or abort(404)
     if not project.user_id == user.id:
@@ -86,6 +88,7 @@ def delete_member(project_id, member_id):
     member = db.session.get(Member, member_id) or abort(404)
     db.session.delete(member)
     db.session.commit()
+    project.update_budget()
     return {}
 
 
@@ -106,4 +109,5 @@ def assign_task(project_id, member_id, task_id):
         abort(409)
     member.assign_task(task)
     db.session.commit()
+    project.update_budget()
     return member
