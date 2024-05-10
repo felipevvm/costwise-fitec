@@ -120,9 +120,10 @@ class Project(Updateable, db.Model):
     name_project = db.Column(db.String(255), nullable=False)
     description_project = db.Column(db.String(500))
     deadline = db.Column(db.Date)
-    budget = db.Column(db.Integer)
-    total_cost_products = db.Column(db.Integer)
-    total_time_tasks = db.Column(db.DateTime)
+    created_at = db.Column(db.Date, default=date.today)
+    budget = db.Column(db.DECIMAL)
+    total_cost_products = db.Column(db.DECIMAL)
+    total_cost_members = db.Column(db.DECIMAL)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     members = db.relationship('Member', backref='project')
@@ -145,6 +146,7 @@ class Task(Updateable, db.Model):
     name_task = db.Column(db.String(255), nullable=False)
     description_task = db.Column(db.String(500))
     deadline = db.Column(db.Date)
+    created_at = db.Column(db.Date, default=date.today)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     members = db.relationship('Member', secondary=task_member, backref='tasks')
@@ -192,7 +194,7 @@ class Product(Updateable, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name_product = db.Column(db.String(255), nullable=False)
-    cost = db.Column(db.Integer, nullable=False)
+    cost = db.Column(db.DECIMAL, nullable=False)
     license = db.Column(db.Boolean, nullable=False)
     type = db.Column(db.Enum(ProductType), nullable=False)
     amount = db.Column(db.Integer)
