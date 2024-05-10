@@ -108,5 +108,6 @@ def assign_member(project_id, task_id, member_id):
         abort(409)
     task.assign_member(member)
     db.session.commit()
+    project.update_budget()
     return task
 

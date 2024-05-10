@@ -27,6 +27,7 @@ def new_product(args, project_id):
     product = Product(project=project, **args)
     db.session.add(product)
     db.session.commit()
+    project.update_budget()
     return product
 
 
@@ -70,6 +71,7 @@ def update_product(data, project_id, product_id):
     product.update(data)
     db.session.add(product)
     db.session.commit()
+    project.update_budget()
     return product
 
 
@@ -86,4 +88,5 @@ def delete_product(project_id, product_id):
     product = db.session.get(Product, product_id) or abort(404)
     db.session.delete(product)
     db.session.commit()
+    project.update_budget()
     return {}
