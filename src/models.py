@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from time import time
 import enum
 import secrets
 
@@ -34,18 +35,18 @@ class Token(db.Model):
 
     def generate(self):
         self.access_token = secrets.token_urlsafe()
-        self.access_expiration = datetime.utcnow() + timedelta(minutes=current_app.config['ACCESS_TOKEN_MINUTES'])
+        self.access_expiration = datetime.now() + timedelta(minutes=current_app.config['ACCESS_TOKEN_MINUTES'])
         self.refresh_token = secrets.token_urlsafe()
-        self.refresh_expiration = datetime.utcnow() + timedelta(days=current_app.config['REFRESH_TOKEN_DAYS'])
+        self.refresh_expiration = datetime.now() + timedelta(days=current_app.config['REFRESH_TOKEN_DAYS'])
 
     def expire(self, delay=5):
-        self.access_expiration = datetime.utcnow() + timedelta(seconds=delay)
-        self.refresh_expiration = datetime.utcnow() + timedelta(seconds=delay)
+        self.access_expiration = datetime.now() + timedelta(seconds=delay)
+        self.refresh_expiration = datetime.now() + timedelta(seconds=delay)
 
     @staticmethod
     def clean():
         """Remove any tokens that have been expired for more than a day."""
-        yesterday = datetime.utcnow() - timedelta(days=1)
+        yesterday = datetime.now() - timedelta(days=1)
         db.session.query(Token).where(Token.refresh_expiration < yesterday).delete()
         db.session.commit()
 
@@ -93,14 +94,14 @@ class User(Updateable, db.Model):
     def verify_access_token(access_token_jwt):
         token = Token.from_jwt(access_token_jwt)
         if token:
-            if token.access_expiration > datetime.utcnow():
+            if token.access_expiration > datetime.now():
                 return token.user
 
     @staticmethod
     def verify_refresh_token(refresh_token, access_token_jwt):
         token = Token.from_jwt(access_token_jwt)
         if token and token.refresh_token == refresh_token:
-            if token.refresh_expiration > datetime.utcnow():
+            if token.refresh_expiration > datetime.now():
                 return token
 
             # someone tried to refresh with an expired token
@@ -111,6 +112,28 @@ class User(Updateable, db.Model):
     def revoke_all(self):
         db.session.query(Token).where(Token.user == self).delete()
         db.session.commit()
+
+    def generate_reset_token(self):
+        return jwt.encode(
+            {
+                'exp': time() + current_app.config['RESET_TOKEN_MINUTES'] * 60,
+                'email': self.email
+            },
+            current_app.config['SECRET_KEY'],
+            algorithms='HS256'
+        )
+    
+    @staticmethod
+    def verify_reset_token(reset_token):
+        try:
+            data = jwt.decode(
+                reset_token,
+                current_app.config['SECRET_KEY'],
+                algorithms='HS256'
+            )
+        except jwt.PyJWKError:
+            return
+        return db.session.scalar(db.session.query(User).filter_by(email=data['email']))
 
 
 class Project(Updateable, db.Model):
