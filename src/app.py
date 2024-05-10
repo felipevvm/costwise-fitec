@@ -30,6 +30,8 @@ def create_app(test_config=None):
     mail.init_app(app)
 
     # Blueprints
+    from .blueprints.errors import errors
+    app.register_blueprint(errors)
     from .blueprints.users import users
     app.register_blueprint(users, url_prefix=URL_PREFIX)
     from .blueprints.tokens import tokens
