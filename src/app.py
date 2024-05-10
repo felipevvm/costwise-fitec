@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from .extensions import db, ma, af
+from .extensions import db, ma, af, mail
 
 URL_PREFIX = '/api/v1/'
 
@@ -27,6 +27,7 @@ def create_app(test_config=None):
     db.init_app(app)
     ma.init_app(app)
     af.init_app(app)
+    mail.init_app(app)
 
     # Blueprints
     from .blueprints.users import users

@@ -1,3 +1,4 @@
+from time import time
 from datetime import timedelta, date, datetime
 from dateutil import relativedelta
 
@@ -114,6 +115,28 @@ class User(Updateable, db.Model):
         db.session.query(Token).where(Token.user == self).delete()
         db.session.commit()
 
+    def generate_reset_token(self):
+        return jwt.encode(
+            {
+                'exp': time() + current_app.config['RESET_TOKEN_MINUTES'] * 60,
+                'email': self.email
+            },
+            current_app.config['SECRET_KEY'],
+            algorithms='HS256'
+        )
+
+    @staticmethod
+    def verify_reset_token(reset_token):
+        try:
+            data = jwt.decode(
+                reset_token,
+                current_app.config['SECRET_KEY'],
+                algorithms='HS256'
+            )
+        except jwt.PyJWKError:
+            return
+        return db.session.scalar(db.session.query(User).filter_by(email=data['email']))
+
 
 class Project(Updateable, db.Model):
     __tablename__ = "project"
@@ -169,7 +192,6 @@ class Task(Updateable, db.Model):
     name_task = db.Column(db.String(255), nullable=False)
     description_task = db.Column(db.String(500))
     deadline = db.Column(db.Date)
-    created_at = db.Column(db.Date, default=date.today)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     members = db.relationship('Member', secondary=task_member, backref='tasks')
@@ -235,7 +257,7 @@ class Product(Updateable, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name_product = db.Column(db.String(255), nullable=False)
-    cost = db.Column(db.DECIMAL, nullable=False)
+    cost = db.Column(db.Integer, nullable=False)
     license = db.Column(db.Boolean, nullable=False)
     type = db.Column(db.Enum(ProductType), nullable=False)
     amount = db.Column(db.Integer)
