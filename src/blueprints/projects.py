@@ -3,7 +3,7 @@ from apifairy import authenticate, response, body, other_responses
 
 from src.extensions import db
 from src.auth import token_auth
-from src.models import Project
+from src.models import Project,  Member, Product
 from src.schemas import ProjectSchema, EmptySchema
 from .products import products
 from .members import members
@@ -84,3 +84,4 @@ def delete_project(project_id):
     db.session.delete(project)
     db.session.commit()
     return {}
+

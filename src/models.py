@@ -131,7 +131,7 @@ class User(Updateable, db.Model):
             data = jwt.decode(
                 reset_token,
                 current_app.config['SECRET_KEY'],
-                algorithms='HS256'
+                algorithms=['HS256']
             )
         except jwt.PyJWKError:
             return
@@ -245,6 +245,20 @@ class Member(Updateable, db.Model):
             total_cost += member.salary * longest_task_months
         return total_cost
 
+    def calc_total_cost(self):
+        longest_task = date.today()
+        longest_task_months = 0
+        for task in self.tasks:
+            if task.deadline > longest_task:
+                longest_task = task.deadline
+                longest_task_months = task.total_months()
+        return self.salary * longest_task_months
+
+    @staticmethod
+    def calc_costs_for_all_members(project_id):
+        members = db.session.get(Project, project_id).members
+        return {member.name_member: member.calc_total_cost() for member in members}
+
 
 class ProductType(enum.Enum):
     HARDWARE = 'HARDWARE'
@@ -285,3 +299,43 @@ class Product(Updateable, db.Model):
         if total_cost is not None:
             return total_cost
         return 0
+
+    @staticmethod
+    def calc_no_license_products(project_id):
+        total_cost = (db.session.query(db.func.sum(Product.cost * Product.amount))
+                      .filter(Product.project_id == project_id, Product.license == False)
+                      .scalar())
+        return total_cost if total_cost is not None else 0
+
+    @staticmethod
+    def calc_license_products(project_id):
+        total_months = db.session.get(Project, project_id).total_months()
+        total_cost = (db.session.query(db.func.sum((Product.cost * Product.amount) * total_months))
+                      .filter(Product.project_id == project_id, Product.license == True)
+                      .scalar())
+        return total_cost if total_cost is not None else 0
+
+    @staticmethod
+    def calc_total_costs_by_license(project_id):
+        no_license_cost = Product.calc_no_license_products(project_id)
+        license_cost = Product.calc_license_products(project_id)
+        return {
+            "no_license_cost": no_license_cost,
+            "license_cost": license_cost
+        }
+
+    @staticmethod
+    def calc_total_costs_by_type(project_id):
+        costs_by_type = db.session.query(
+            Product.type,
+            db.func.sum(Product.cost * Product.amount)
+        ).filter(
+            Product.project_id == project_id
+        ).group_by(
+            Product.type
+        ).all()
+
+        total_costs = {ptype.value: 0 for ptype in ProductType}
+        for ptype, total in costs_by_type:
+            total_costs[ptype.value] = total if total is not None else 0
+        return total_costs
