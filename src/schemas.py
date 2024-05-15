@@ -1,3 +1,5 @@
+from datetime import date
+
 from marshmallow import validate
 from marshmallow_enum import EnumField
 
@@ -15,7 +17,7 @@ class TokenSchema(ma.Schema):
         ordered = True
 
     access_token = ma.String(required=True)
-    refresh_token = ma.String()
+    refresh_token = ma.String(required=True)
 
 
 # noinspection PyUnresolvedReferences
@@ -27,9 +29,10 @@ class UserSchema(ma.SQLAlchemySchema):
         ordered = True
 
     id = ma.auto_field(dump_only=True)
-    email = ma.auto_field(required=True)
-    username = ma.auto_field(required=True)
-    password = ma.String(required=True, load_only=True)
+    email = ma.Email(required=True, validate=validate.And(validate.Email(),
+                                                          validate.Length(min=5, max=255)))
+    username = ma.auto_field(required=True, validate=validate.Length(min=5, max=255))
+    password = ma.String(required=True, load_only=True, validate=validate.Length(min=5, max=255))
     projects = ma.Nested(lambda: ProjectSchema, only=['id', 'name_project'], many=True, dump_only=True)
 
 
@@ -41,9 +44,9 @@ class ProjectSchema(ma.SQLAlchemyAutoSchema):
         ordered = True
 
     id = ma.auto_field(dump_only=True)
-    name_project = ma.auto_field(required=True)
-    description_project = ma.auto_field()
-    deadline = ma.auto_field(required=True)
+    name_project = ma.auto_field(required=True, validate=validate.Length(min=5, max=255))
+    description_project = ma.auto_field(validate=validate.Length(max=500))
+    deadline = ma.auto_field(required=True, validate=validate.Range(min=date.today()))
     created_at = ma.auto_field(dump_only=True)
     budget = ma.auto_field(dump_only=True)
     total_cost_products = ma.auto_field(dump_only=True)
@@ -63,9 +66,9 @@ class MemberSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
 
     id = ma.auto_field(dump_only=True)
-    name_member = ma.auto_field(required=True)
-    role = ma.auto_field(required=True)
-    salary = ma.auto_field(required=True)
+    name_member = ma.auto_field(required=True, validate=validate.Length(min=5, max=255))
+    role = ma.auto_field(required=True, validate=validate.Length(min=5, max=255))
+    salary = ma.auto_field(required=True, validate=validate.Range(min=0))
 
     project_id = ma.auto_field(dump_only=True)
     project = ma.Nested(ProjectSchema, only=['name_project', 'user_id'], dump_only=True)
@@ -79,10 +82,10 @@ class TaskSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
 
     id = ma.auto_field(dump_only=True)
-    name_task = ma.auto_field(required=True)
-    description_task = ma.auto_field()
-    deadline = ma.auto_field(required=True)
-    created_at = ma.auto_field(dump_only=True)
+    name_task = ma.auto_field(required=True, validate=validate.Length(min=5, max=255))
+    description_task = ma.auto_field(validate=validate.Length(max=500))
+    deadline = ma.auto_field(required=True, validate=validate.Range(min=date.today()))
+    created_at = ma.auto_field (dump_only=True)
 
     project_id = ma.auto_field(dump_only=True)
     project = ma.Nested(ProjectSchema, only=['name_project', 'user_id'], dump_only=True)
@@ -96,11 +99,11 @@ class ProductSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
 
     id = ma.auto_field(dump_only=True)
-    name_product = ma.auto_field(required=True)
+    name_product = ma.auto_field(required=True, validate=validate.Length(min=5, max=255))
     type = EnumField(ProductType, required=True)
-    license = ma.auto_field(required=True)
-    cost = ma.auto_field(required=True)
-    amount = ma.auto_field(required=True)
+    license = ma.Boolean(required=True)
+    cost = ma.auto_field(required=True, validate=validate.Range(min=0))
+    amount = ma.auto_field(required=True, validate=validate.Range(min=0))
     project_id = ma.auto_field(dump_only=True)
     project = ma.Nested(ProjectSchema, only=['name_project', 'user_id'], dump_only=True)
 
