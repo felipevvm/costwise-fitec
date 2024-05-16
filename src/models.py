@@ -170,11 +170,13 @@ class Project(Updateable, db.Model):
         return delta.months + (delta.years * 12)
 
     def calc_cost_total_products(self):
-        self.total_cost_products = (Product.calc_license_cost_total(self.id) +
-                                    Product.calc_no_license_cost_total(self.id))
+        no_license_cost = Product.calc_no_license_products_total_cost(self.id)
+        license_cost = Product.calc_license_products_total_cost(self.id)
+        self.total_cost_products = license_cost + no_license_cost
 
     def calc_cost_total_member(self):
-        self.total_cost_members = Member.calc_total_cost_members(self.id)
+        members = db.session.get(Project, self.id).members
+        self.total_cost_members = sum(member.calc_total_cost() for member in members)
 
     def calc_budget(self):
         self.budget = self.total_cost_members + self.total_cost_products
@@ -189,9 +191,10 @@ class Task(Updateable, db.Model):
     __tablename__ = "task"
 
     id = db.Column(db.Integer, primary_key=True)
-    name_task = db.Column(db.String(255), nullable=False)
+    name_task = db.Column(db.String(255), unique=True, nullable=False)
     description_task = db.Column(db.String(500))
     deadline = db.Column(db.Date)
+    created_at = db.Column(db.Date, default=date.today)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     members = db.relationship('Member', secondary=task_member, backref='tasks')
@@ -215,7 +218,7 @@ class Member(Updateable, db.Model):
     __tablename__ = "member"
 
     id = db.Column(db.Integer, primary_key=True)
-    name_member = db.Column(db.String(255), nullable=False)
+    name_member = db.Column(db.String(255), unique=True, nullable=False)
     role = db.Column(db.String(255), nullable=False)
     salary = db.Column(db.Integer)
 
@@ -231,20 +234,6 @@ class Member(Updateable, db.Model):
     def has_task(self, task):
         return task in self.tasks
 
-    @staticmethod
-    def calc_total_cost_members(project_id):
-        total_cost = 0
-        members = db.session.get(Project, project_id).members
-        for member in members:
-            longest_task = date.today()
-            longest_task_months = 0
-            for task in member.tasks:
-                if task.deadline > longest_task:
-                    longest_task = task.deadline
-                    longest_task_months = task.total_months()
-            total_cost += member.salary * longest_task_months
-        return total_cost
-
     def calc_total_cost(self):
         longest_task = date.today()
         longest_task_months = 0
@@ -257,7 +246,10 @@ class Member(Updateable, db.Model):
     @staticmethod
     def calc_costs_for_all_members(project_id):
         members = db.session.get(Project, project_id).members
-        return {member.name_member: member.calc_total_cost() for member in members}
+        all_members_cost = []
+        for member in members:
+            all_members_cost.append({'member': member.name_member, 'total_cost': member.calc_total_cost()})
+        return all_members_cost
 
 
 class ProductType(enum.Enum):
@@ -282,43 +274,24 @@ class Product(Updateable, db.Model):
         return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
 
     @staticmethod
-    def calc_no_license_cost_total(project_id):
+    def calc_no_license_products_total_cost(project_id):
         total_cost = (db.session.query(db.func.sum(Product.cost * Product.amount))
                       .filter(Product.project_id == project_id, Product.license == 0)
-                      .scalar())
-        if total_cost is not None:
-            return total_cost
-        return 0
-
-    @staticmethod
-    def calc_license_cost_total(project_id):
-        total_months = db.session.get(Project, project_id).total_months()
-        total_cost = (db.session.query(db.func.sum((Product.cost * Product.amount) * total_months))
-                      .filter(Product.project_id == project_id, Product.license == 1)
-                      .scalar())
-        if total_cost is not None:
-            return total_cost
-        return 0
-
-    @staticmethod
-    def calc_no_license_products(project_id):
-        total_cost = (db.session.query(db.func.sum(Product.cost * Product.amount))
-                      .filter(Product.project_id == project_id, Product.license == False)
                       .scalar())
         return total_cost if total_cost is not None else 0
 
     @staticmethod
-    def calc_license_products(project_id):
+    def calc_license_products_total_cost(project_id):
         total_months = db.session.get(Project, project_id).total_months()
         total_cost = (db.session.query(db.func.sum((Product.cost * Product.amount) * total_months))
-                      .filter(Product.project_id == project_id, Product.license == True)
+                      .filter(Product.project_id == project_id, Product.license == 1)
                       .scalar())
         return total_cost if total_cost is not None else 0
 
     @staticmethod
     def calc_total_costs_by_license(project_id):
-        no_license_cost = Product.calc_no_license_products(project_id)
-        license_cost = Product.calc_license_products(project_id)
+        no_license_cost = Product.calc_no_license_products_total_cost(project_id)
+        license_cost = Product.calc_license_products_total_cost(project_id)
         return {
             "no_license_cost": no_license_cost,
             "license_cost": license_cost
