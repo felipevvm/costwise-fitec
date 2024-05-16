@@ -109,6 +109,7 @@ class ProductSchema(ma.SQLAlchemyAutoSchema):
 
     id = ma.auto_field(dump_only=True)
     name_product = ma.auto_field(required=True, validate=validate.Length(min=1, max=255))
+    description_product = ma.auto_field(validate=validate.Length(max=500))
     type = ma.Enum(ProductType, required=True)
     license = ma.Boolean(required=True)
     cost = ma.auto_field(required=True, validate=validate.Range(min=0))
