@@ -6,7 +6,7 @@ import enum
 import secrets
 
 import jwt
-from flask import current_app
+from flask import current_app, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .extensions import db
@@ -75,6 +75,10 @@ class User(Updateable, db.Model):
 
     def __repr__(self):
         return '<User {}-{}>'.format(self.id, self.username)
+
+    @property
+    def url(self):
+        return url_for('users.get_user', id=self.id)
 
     @property
     def password(self):
@@ -158,6 +162,10 @@ class Project(Updateable, db.Model):
     def __repr__(self):
         return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id)
 
+    @property
+    def url(self):
+        return url_for('projects.get_project', id=self.id)
+
     def update_budget(self):
         self.calc_cost_total_member()
         self.calc_cost_total_products()
@@ -202,6 +210,10 @@ class Task(Updateable, db.Model):
     def __repr__(self):
         return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
 
+    @property
+    def url(self):
+        return url_for('tasks.get_task', id=self.id)
+
     def assign_member(self, member):
         if not self.has_member(member):
             self.members.append(member)
@@ -226,6 +238,10 @@ class Member(Updateable, db.Model):
 
     def __repr__(self):
         return '<Member {}-{}-{}>'.format(self.id, self.name_member, self.role)
+
+    @property
+    def url(self):
+        return url_for('members.get_member', id=self.id)
 
     def assign_task(self, task):
         if not self.has_task(task):
@@ -262,7 +278,8 @@ class Product(Updateable, db.Model):
     __tablename__ = "product"
 
     id = db.Column(db.Integer, primary_key=True)
-    name_product = db.Column(db.String(255), nullable=False)
+    name_product = db.Column(db.String(255), unique=True, nullable=False)
+    description_product = db.Column(db.String(500))
     cost = db.Column(db.Integer, nullable=False)
     license = db.Column(db.Boolean, nullable=False)
     type = db.Column(db.Enum(ProductType), nullable=False)
@@ -272,6 +289,10 @@ class Product(Updateable, db.Model):
 
     def __repr__(self):
         return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
+
+    @property
+    def url(self):
+        return url_for('products.get_product', id=self.id)
 
     @staticmethod
     def calc_no_license_products_total_cost(project_id):
