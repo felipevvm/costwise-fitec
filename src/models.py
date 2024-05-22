@@ -41,7 +41,7 @@ class Token(db.Model):
         self.refresh_token = secrets.token_urlsafe()
         self.refresh_expiration = datetime.now() + timedelta(days=current_app.config['REFRESH_TOKEN_DAYS'])
 
-    def expire(self, delay=5):
+    def expire(self, delay=0):
         self.access_expiration = datetime.now() + timedelta(seconds=delay)
         self.refresh_expiration = datetime.now() + timedelta(seconds=delay)
 
@@ -58,7 +58,7 @@ class Token(db.Model):
             access_token = jwt.decode(access_token_jwt,
                                       current_app.config['SECRET_KEY'],
                                       algorithms=['HS256'])['token']
-            return db.session.scalar(db.session.query(Token).filter_by(access_token=access_token))
+            return db.session.query(Token).filter_by(access_token=access_token).scalar()
         except jwt.PyJWTError:
             pass
 

@@ -23,7 +23,7 @@ def token_response(token):
 @tokens.route('/tokens', methods=['POST'])
 @authenticate(basic_auth)
 @response(token_schema)
-@other_responses({401: 'Invalid email or password'})
+@other_responses({401: 'Invalid username or password'})
 def new_tokens():
     """Create new Acess and Refresh tokens"""
     user = basic_auth.current_user()

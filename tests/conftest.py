@@ -31,16 +31,17 @@ def app_database(app):
 
     yield app
 
-    db.session.commit()
     db.drop_all()
+    db.session.commit()
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def database_with_data(app_database):
     """ Populate the database with some data. """
 
     # Create a User
     user = User(
+        id=1,
         email='test@test.com',
         username='test1',
         password='test1'
@@ -48,6 +49,7 @@ def database_with_data(app_database):
 
     # Create a Project
     project = Project(
+        id=1,
         name_project='test_project',
         description_project='test_description',
         deadline=date(3000, 12, 30),
@@ -56,6 +58,7 @@ def database_with_data(app_database):
 
     # Create a Task
     task = Task(
+        id=1,
         name_task='test_task',
         description_task='test_description',
         deadline=date(3000, 12, 30),
@@ -64,6 +67,7 @@ def database_with_data(app_database):
 
     # Create a Member
     member = Member(
+        id=1,
         name_member='test_member',
         role='test_role',
         salary=1000,
@@ -72,6 +76,7 @@ def database_with_data(app_database):
 
     # Create a Product(Hardware)
     product_hardware_no_license = Product(
+        id=1,
         name_product='hardware_no_license',
         description_product='test_description',
         license=0,
@@ -82,6 +87,7 @@ def database_with_data(app_database):
     )
 
     product_hardware_license = Product(
+        id=2,
         name_product='hardware_license',
         description_product='test_description',
         license=1,
@@ -93,6 +99,7 @@ def database_with_data(app_database):
 
     # Create a Product(Software)
     product_software_no_license = Product(
+        id=3,
         name_product='software_no_license',
         description_product='test_description',
         license=0,
@@ -103,6 +110,7 @@ def database_with_data(app_database):
     )
 
     product_software_license = Product(
+        id=4,
         name_product='software_license',
         description_product='test_description',
         license=1,
@@ -114,6 +122,7 @@ def database_with_data(app_database):
 
     # Create a Product(Other)
     product_other_no_license = Product(
+        id=5,
         name_product='other_no_license',
         description_product='test_description',
         license=0,
@@ -124,6 +133,7 @@ def database_with_data(app_database):
     )
 
     product_other_license = Product(
+        id=6,
         name_product='other_license',
         description_product='test_description',
         license=1,
@@ -140,14 +150,18 @@ def database_with_data(app_database):
 
     yield app_database
 
-    db.session.delete(user)
-    db.session.delete(project)
-    db.session.delete(task)
-    db.session.delete(member)
-    db.session.delete(product_hardware_no_license)
-    db.session.delete(product_hardware_license)
-    db.session.delete(product_software_no_license)
-    db.session.delete(product_software_license)
-    db.session.delete(product_other_no_license)
-    db.session.delete(product_other_license)
+    db.session.query(User).delete()
+    db.session.query(Project).delete()
+    db.session.query(Task).delete()
+    db.session.query(Member).delete()
+    db.session.query(Product).delete()
     db.session.commit()
+
+
+@pytest.fixture
+def app_token(database_with_data):
+    """ Create a token for the user test1 """
+    response = database_with_data.post('api/v1/tokens', auth=('test1', 'test1'))
+    assert response.status_code == 200
+
+    return response.json['access_token'], response.json['refresh_token']
