@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -52,7 +52,7 @@ def database_with_data(app_database):
         id=1,
         name_project='test_project',
         description_project='test_description',
-        deadline=date(3000, 12, 30),
+        deadline=date.today() + timedelta(days=(31*6)),
         owner=user
     )
 
@@ -61,7 +61,7 @@ def database_with_data(app_database):
         id=1,
         name_task='test_task',
         description_task='test_description',
-        deadline=date(3000, 12, 30),
+        deadline=date.today() + timedelta(days=31*6),
         project=project
     )
 

@@ -124,9 +124,9 @@ def test_verify_refresh_token(database_with_data, tokens):
     assert token.user == user
 
 
-def test_verify_reset_token_revoke(database_with_data, tokens):
+def test_verify_refresh_token_revoke(database_with_data, tokens):
     """
-    Given a user and a expired refresh token,
+    Given a user and an expired refresh token,
     When the verify_refresh_token method is called,
     Then the method should revoke all tokens from the user.
     """
@@ -161,9 +161,10 @@ def test_generate_reset_token(database_with_data):
     """
     user = db.session.get(User, 1)
     reset_token = user.generate_reset_token()
+    time_now = time()
     reset_token_jwt = jwt.encode(
         {
-            'exp': time() + current_app.config['RESET_TOKEN_MINUTES'] * 60,
+            'exp': time_now + current_app.config['RESET_TOKEN_MINUTES'] * 60,
             'email': user.email
         },
         current_app.config['SECRET_KEY'],

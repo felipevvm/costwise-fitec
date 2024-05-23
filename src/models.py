@@ -162,7 +162,7 @@ class Project(Updateable, db.Model):
 
     @property
     def url(self):
-        return url_for('projects.get_project', id=self.id)
+        return url_for('projects.get_project', project_id=self.id)
 
     def update_budget(self):
         self.calc_cost_total_member()

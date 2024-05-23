@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from src import db
 from src.models import User, Project, Member, Task, Product, ProductType
@@ -49,7 +49,7 @@ def test_project_data(database_with_data):
     assert project is not None
     assert project.name_project == 'test_project'
     assert project.description_project == 'test_description'
-    assert project.deadline == date(3000, 12, 30)
+    assert project.deadline == date.today() + timedelta(days=(31*6))
     assert project.owner.id == 1
 
 
@@ -63,7 +63,7 @@ def test_task_data(database_with_data):
     assert task is not None
     assert task.name_task == 'test_task'
     assert task.description_task == 'test_description'
-    assert task.deadline == date(3000, 12, 30)
+    assert task.deadline == date.today() + timedelta(days=31*6)
     assert task.project.id == 1
 
 
