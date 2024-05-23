@@ -78,7 +78,7 @@ class User(Updateable, db.Model):
 
     @property
     def url(self):
-        return url_for('users.get_user', id=self.id)
+        return url_for('users.get_user', user_id=self.id)
 
     @property
     def password(self):

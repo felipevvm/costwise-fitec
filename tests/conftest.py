@@ -159,7 +159,7 @@ def database_with_data(app_database):
 
 
 @pytest.fixture
-def app_token(database_with_data):
+def tokens(database_with_data):
     """ Create a token for the user test1 """
     response = database_with_data.post('api/v1/tokens', auth=('test1', 'test1'))
     assert response.status_code == 200
