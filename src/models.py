@@ -286,11 +286,11 @@ class Product(Updateable, db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
 
     def __repr__(self):
-        return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
+        return '<Product {}-{}-{}-{}>'.format(self.id, self.name_product, self.type, self.cost)
 
     @property
     def url(self):
-        return url_for('products.get_product', id=self.id)
+        return url_for('projects.products.get_product', project_id=self.project_id, product_id=self.id)
 
     @staticmethod
     def calc_no_license_products_total_cost(project_id):
@@ -318,16 +318,15 @@ class Product(Updateable, db.Model):
 
     @staticmethod
     def calc_total_costs_by_type(project_id):
-        costs_by_type = db.session.query(
-            Product.type,
-            db.func.sum(Product.cost * Product.amount)
-        ).filter(
-            Product.project_id == project_id
-        ).group_by(
-            Product.type
-        ).all()
+        project = db.session.get(Project, project_id)
+        total_months = project.total_months()
+        products = project.products
+        total_cost = 0
 
         total_costs = {ptype.value: 0 for ptype in ProductType}
-        for ptype, total in costs_by_type:
-            total_costs[ptype.value] = total if total is not None else 0
+        for product in products:
+            cost = product.cost * product.amount
+            if product.license:
+                cost *= total_months
+            total_costs[product.type.value] += cost
         return total_costs

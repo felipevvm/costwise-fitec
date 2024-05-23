@@ -95,7 +95,7 @@ def test_calc_total_cost(database_with_data):
 def test_calc_costs_for_all_members(database_with_data):
     """
     Given a project with members and tasks,
-    When I call the calc_cost_for_all_members method of the Member model,
+    When I call the calc_cost_for_all_members method of the Member class,
     Then the total cost of all members should be calculated.
     """
     project = db.session.get(Project, 1)
