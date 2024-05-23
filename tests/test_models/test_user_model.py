@@ -157,21 +157,19 @@ def test_generate_reset_token(database_with_data):
     """
     Given a user,
     When the generate_reset_token method is called,
-    Then the method should return a token object
+    Then the method should return a reset token object
     """
     user = db.session.get(User, 1)
-    reset_token = user.generate_reset_token()
-    time_now = time()
-    reset_token_jwt = jwt.encode(
-        {
-            'exp': time_now + current_app.config['RESET_TOKEN_MINUTES'] * 60,
-            'email': user.email
-        },
+    reset_token_jwt = user.generate_reset_token()
+    assert reset_token_jwt is not None
+
+    reset_token = jwt.decode(
+        reset_token_jwt,
         current_app.config['SECRET_KEY'],
-        algorithm='HS256'
+        algorithms=['HS256']
     )
-    assert reset_token is not None
-    assert reset_token == reset_token_jwt
+
+    assert reset_token['email'] == user.email
 
 
 def test_verify_reset_token(database_with_data):

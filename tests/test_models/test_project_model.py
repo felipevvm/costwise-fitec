@@ -11,7 +11,7 @@ def test_project_members(database_with_data):
     project = db.session.get(Project, 1)
     assert project is not None
     assert project.members is not None
-    assert len(project.members) == 1
+    assert len(project.members) == 2
     assert project.members[0].name_member == 'test_member'
 
 

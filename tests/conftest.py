@@ -65,12 +65,20 @@ def database_with_data(app_database):
         project=project
     )
 
-    # Create a Member
-    member = Member(
+    # Create Members
+    member1 = Member(
         id=1,
         name_member='test_member',
         role='test_role',
         salary=1000,
+        project=project
+    )
+
+    member2 = Member(
+        id=2,
+        name_member='test_member2',
+        role='test_role',
+        salary=100,
         project=project
     )
 
@@ -143,7 +151,7 @@ def database_with_data(app_database):
         project=project
     )
 
-    db.session.add_all([user, project, task, member, product_hardware_no_license, product_hardware_license,
+    db.session.add_all([user, project, task, member1, member2, product_hardware_no_license, product_hardware_license,
                         product_software_no_license, product_software_license, product_other_no_license,
                         product_other_license])
     db.session.commit()

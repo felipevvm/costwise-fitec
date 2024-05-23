@@ -73,12 +73,19 @@ def test_member_data(database_with_data):
     When the member is requested,
     Then the member data is returned.
     """
-    member = db.session.get(Member, 1)
-    assert member is not None
-    assert member.name_member == 'test_member'
-    assert member.role == 'test_role'
-    assert member.salary == 1000
-    assert member.project.id == 1
+    member1 = db.session.get(Member, 1)
+    assert member1 is not None
+    assert member1.name_member == 'test_member'
+    assert member1.role == 'test_role'
+    assert member1.salary == 1000
+    assert member1.project.id == 1
+
+    member2 = db.session.get(Member, 2)
+    assert member2 is not None
+    assert member2.name_member == 'test_member2'
+    assert member2.role == 'test_role'
+    assert member2.salary == 100
+    assert member2.project.id == 1
 
 
 def test_product_data(database_with_data):
