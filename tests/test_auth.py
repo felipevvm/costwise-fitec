@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pytest
+
 from src import db
 from src.models import Token
 
@@ -16,25 +18,24 @@ def test_create_tokens(database_with_data):
     assert response.json['refresh_token'] is not None
 
 
-def test_invalid_credentials(database_with_data):
+invalid_credentials = [
+    ('test1', 'test2'),
+    ('test2', 'test1'),
+    ('test2', 'test2'),
+    ('test1', ''),
+    ('', 'test1'),
+    ('', ''),
+]
+
+
+@pytest.mark.parametrize('credentials', invalid_credentials)
+def test_invalid_credentials(database_with_data, credentials):
     """
     Given invalid credentials,
     When the user authenticates,
     Then the user should not receive an access token and a refresh token.
     """
-    response = database_with_data.post('api/v1/tokens', auth=('test1', 'test2'))
-    assert response.status_code == 401
-
-    response = database_with_data.post('api/v1/tokens', auth=('test2', 'test1'))
-    assert response.status_code == 401
-
-    response = database_with_data.post('api/v1/tokens', auth=('test2', 'test2'))
-    assert response.status_code == 401
-
-    response = database_with_data.post('api/v1/tokens', auth=('test1', ''))
-    assert response.status_code == 401
-
-    response = database_with_data.post('api/v1/tokens', auth=('', 'test1'))
+    response = database_with_data.post('api/v1/tokens', auth=credentials)
     assert response.status_code == 401
 
 
