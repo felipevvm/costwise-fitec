@@ -36,7 +36,7 @@ def test_url(database_with_data):
     """
     Given a user,
     When I call the url property of the user object,
-    Then the URL should be '/api/v1/users/<id>'.
+    Then the URL should be '/api/v1/users/<user_id>'.
     """
     user = db.session.get(User, 1)
     assert user is not None

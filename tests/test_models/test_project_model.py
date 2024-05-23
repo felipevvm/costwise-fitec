@@ -61,7 +61,7 @@ def test_url(database_with_data):
     """
     Given a project,
     When I call the url property of the project object,
-    Then the URL should be '/api/v1/projects/<id>'.
+    Then the URL should be '/api/v1/projects/<project_id>'.
     """
     project = db.session.get(Project, 1)
     assert project is not None

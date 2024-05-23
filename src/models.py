@@ -210,7 +210,7 @@ class Task(Updateable, db.Model):
 
     @property
     def url(self):
-        return url_for('tasks.get_task', id=self.id)
+        return url_for('projects.tasks.get_task', project_id=self.project_id, task_id=self.id)
 
     def assign_member(self, member):
         if not self.has_member(member):
