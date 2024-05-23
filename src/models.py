@@ -126,20 +126,18 @@ class User(Updateable, db.Model):
                 'email': self.email
             },
             current_app.config['SECRET_KEY'],
-            algorithms='HS256'
+            algorithm='HS256'
         )
 
     @staticmethod
     def verify_reset_token(reset_token):
         try:
-            data = jwt.decode(
-                reset_token,
-                current_app.config['SECRET_KEY'],
-                algorithms=['HS256']
-            )
-        except jwt.PyJWKError:
+            data = jwt.decode(reset_token,
+                              current_app.config['SECRET_KEY'],
+                              algorithms=['HS256'])
+        except jwt.PyJWTError:
             return
-        return db.session.scalar(db.session.query(User).filter_by(email=data['email']))
+        return db.session.query(User).filter_by(email=data['email']).scalar()
 
 
 class Project(Updateable, db.Model):

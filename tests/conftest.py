@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from src import create_app, db
-from src.models import User, Project, Member, Task, Product
+from src.models import User, Project, Member, Task, Product, Token
 
 
 @pytest.fixture(scope='session')
@@ -24,7 +24,7 @@ def app():
     ctx.pop()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def app_database(app):
     """ Initialize the database for the tests."""
     db.create_all()
@@ -35,7 +35,7 @@ def app_database(app):
     db.session.commit()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def database_with_data(app_database):
     """ Populate the database with some data. """
 
