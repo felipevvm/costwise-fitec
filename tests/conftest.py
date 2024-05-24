@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import pytest
 
 from src import create_app, db
-from src.models import User, Project, Member, Task, Product, Token
+from src.models import User, Project, Member, Task, Product
 
 
 @pytest.fixture(scope='module')

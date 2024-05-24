@@ -56,7 +56,8 @@ def test_get_user_invalid_id(database_with_data, access_token_valid, user_id):
     When the method is GET and the user provides an invalid user id,
     Then the user should receive a 404 status code.
     """
-    response = database_with_data.get(f'api/v1/users/{user_id}', headers={'Authorization': f'Bearer {access_token_valid}'})
+    response = database_with_data.get(f'api/v1/users/{user_id}', headers={
+        'Authorization': f'Bearer {access_token_valid}'})
 
     assert response.status_code == 404
 

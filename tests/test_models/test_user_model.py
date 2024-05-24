@@ -1,5 +1,3 @@
-from time import time
-
 import jwt
 import pytest
 from flask import current_app
