@@ -58,7 +58,7 @@ def update_user(data):
 @response(EmptySchema, 204, description='User deleted')
 @other_responses({404: 'User not found'})
 def delete_user():
-    """Delete a User by id"""
+    """Delete a User"""
     user = token_auth.current_user() or abort(404)
     db.session.delete(user)
     db.session.commit()

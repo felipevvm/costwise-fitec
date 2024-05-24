@@ -25,7 +25,7 @@ class Token(db.Model):
     access_expiration = db.Column(db.DateTime)
     refresh_token = db.Column(db.String(64))
     refresh_expiration = db.Column(db.DateTime)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     user = db.relationship('User', backref='tokens')
 
@@ -152,7 +152,7 @@ class Project(Updateable, db.Model):
     total_cost_products = db.Column(db.DECIMAL)
     total_cost_members = db.Column(db.DECIMAL)
 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     members = db.relationship('Member', backref='project')
     tasks = db.relationship('Task', backref='project')
     products = db.relationship('Product', backref='project')
@@ -202,7 +202,7 @@ class Task(Updateable, db.Model):
     deadline = db.Column(db.Date)
     created_at = db.Column(db.Date, default=date.today)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
     members = db.relationship('Member', secondary=task_member, backref='tasks')
 
     def __repr__(self):
@@ -232,7 +232,7 @@ class Member(Updateable, db.Model):
     role = db.Column(db.String(255), nullable=False)
     salary = db.Column(db.Integer)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     def __repr__(self):
         return '<Member {}-{}-{}>'.format(self.id, self.name_member, self.role)
@@ -280,7 +280,7 @@ class Product(Updateable, db.Model):
     description_product = db.Column(db.String(500))
     cost = db.Column(db.Integer, nullable=False)
     license = db.Column(db.Boolean, nullable=False)
-    type = db.Column(db.Enum(ProductType), nullable=False)
+    type = db.Column(db.Enum(ProductType))
     amount = db.Column(db.Integer)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
@@ -321,7 +321,6 @@ class Product(Updateable, db.Model):
         project = db.session.get(Project, project_id)
         total_months = project.total_months()
         products = project.products
-        total_cost = 0
 
         total_costs = {ptype.value: 0 for ptype in ProductType}
         for product in products:

@@ -6,7 +6,7 @@ from src import create_app, db
 from src.models import User, Project, Member, Task, Product, Token
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def app():
     """ Instance of Main flask app"""
     app = create_app({
@@ -171,8 +171,14 @@ def database_with_data(app_database):
 
 @pytest.fixture
 def tokens(database_with_data):
-    """ Create a token for the user test1 """
+    """ Create tokens for the user test1 """
     response = database_with_data.post('api/v1/tokens', auth=('test1', 'test1'))
     assert response.status_code == 200
 
     return response.json['access_token'], response.json['refresh_token']
+
+
+@pytest.fixture
+def access_token_valid(tokens):
+    """ Return the access token """
+    return tokens[0]
