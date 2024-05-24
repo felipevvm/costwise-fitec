@@ -13,6 +13,19 @@ members_schema = MemberSchema(many=True)
 update_member_schema = MemberSchema(partial=True)
 
 
+@members.route('/members', methods=['GET'])
+@authenticate(token_auth)
+@response(members_schema, 200)
+@other_responses({404: 'Project not found', 401: 'User not allowed'})
+def get_members(project_id):
+    """Return all Members"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    return project.members
+
+
 @members.route('/members', methods=['POST'])
 @authenticate(token_auth)
 @body(member_schema)
@@ -31,19 +44,6 @@ def new_members(args, project_id):
     return member
 
 
-@members.route('/members', methods=['GET'])
-@authenticate(token_auth)
-@response(members_schema)
-@other_responses({404: 'Project not found', 401: 'User not allowed'})
-def get_members(project_id):
-    """Return all Members"""
-    user = token_auth.current_user()
-    project = db.session.get(Project, project_id) or abort(404)
-    if not project.user_id == user.id:
-        abort(401)
-    return project.members
-
-
 @members.route('/members/<int:member_id>', methods=['GET'])
 @authenticate(token_auth)
 @response(member_schema)
@@ -57,8 +57,9 @@ def get_member(project_id, member_id):
     return db.session.get(Member, member_id) or abort(404)
 
 
-@members.route('/members/<string:member_id>', methods=['PUT'])
+@members.route('/members/<int:member_id>', methods=['PUT'])
 @authenticate(token_auth)
+@body(update_member_schema)
 @response(member_schema)
 @other_responses({404: 'Project or Member not found', 401: 'User not allowed'})
 def update_member(data, project_id, member_id):

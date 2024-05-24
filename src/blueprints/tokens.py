@@ -23,7 +23,7 @@ def token_response(token):
 @tokens.route('/tokens', methods=['POST'])
 @authenticate(basic_auth)
 @response(token_schema)
-@other_responses({401: 'Invalid email or password'})
+@other_responses({401: 'Invalid username or password'})
 def new_tokens():
     """Create new Acess and Refresh tokens"""
     user = basic_auth.current_user()
@@ -75,10 +75,11 @@ def revoke_token():
 @other_responses({404: 'User not found'})
 def request_reset(args):
     """Request a password reset token"""
-    user = db.session.scalar(db.session.query(User).filter_by(email=args['email'])) or abort(404)
+    user = db.session.query(User).filter_by(email=args['email']).scalar() or abort(404)
     if user is not None:
         reset_token = user.generate_reset_token()
         send_email(args['email'], user.username, reset_token)
+    return {}
 
 
 @tokens.route('/tokens/reset', methods=['PUT'])

@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app
+from flask import Blueprint
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.exceptions import HTTPException, InternalServerError
 
@@ -17,7 +17,7 @@ def sqlalchemy_integrity_error(error):
 
 
 @errors.app_errorhandler(SQLAlchemyError)
-def sqlalchemy_sql_alchemy_error(error):
+def sqlalchemy_sql_alchemy_error():
     return {
         'code': InternalServerError.code,
         'message': InternalServerError().name,

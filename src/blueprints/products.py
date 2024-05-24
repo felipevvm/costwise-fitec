@@ -13,10 +13,23 @@ products_schema = ProductSchema(many=True)
 update_product_schema = ProductSchema(partial=True)
 
 
+@products.route('/products', methods=['GET'])
+@authenticate(token_auth)
+@response(products_schema)
+@other_responses({404: 'Project not found', 401: 'User not allowed'})
+def get_products(project_id):
+    """Return all Products"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    return project.products
+
+
 @products.route('/products', methods=['POST'])
 @authenticate(token_auth)
 @body(product_schema)
-@response(product_schema)
+@response(product_schema, 201)
 @other_responses({404: 'Project not found', 401: 'User not allowed'})
 def new_product(args, project_id):
     """Create a new Product"""
@@ -29,19 +42,6 @@ def new_product(args, project_id):
     db.session.commit()
     project.update_budget()
     return product
-
-
-@products.route('/products', methods=['GET'])
-@authenticate(token_auth)
-@response(products_schema)
-@other_responses({404: 'Project not found', 401: 'User not allowed'})
-def get_products(project_id):
-    """Return all Products"""
-    user = token_auth.current_user()
-    project = db.session.get(Project, project_id) or abort(404)
-    if not project.user_id == user.id:
-        abort(401)
-    return project.products
 
 
 @products.route('/products/<int:product_id>', methods=['GET'])
@@ -59,6 +59,7 @@ def get_product(project_id, product_id):
 
 @products.route('/products/<int:product_id>', methods=['PUT'])
 @authenticate(token_auth)
+@body(update_product_schema)
 @response(product_schema)
 @other_responses({404: 'Project or Product not found', 401: 'User not allowed'})
 def update_product(data, project_id, product_id):

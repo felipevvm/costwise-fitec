@@ -6,7 +6,7 @@ import enum
 import secrets
 
 import jwt
-from flask import current_app
+from flask import current_app, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .extensions import db
@@ -25,7 +25,7 @@ class Token(db.Model):
     access_expiration = db.Column(db.DateTime)
     refresh_token = db.Column(db.String(64))
     refresh_expiration = db.Column(db.DateTime)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     user = db.relationship('User', backref='tokens')
 
@@ -41,7 +41,7 @@ class Token(db.Model):
         self.refresh_token = secrets.token_urlsafe()
         self.refresh_expiration = datetime.now() + timedelta(days=current_app.config['REFRESH_TOKEN_DAYS'])
 
-    def expire(self, delay=5):
+    def expire(self, delay=0):
         self.access_expiration = datetime.now() + timedelta(seconds=delay)
         self.refresh_expiration = datetime.now() + timedelta(seconds=delay)
 
@@ -58,7 +58,7 @@ class Token(db.Model):
             access_token = jwt.decode(access_token_jwt,
                                       current_app.config['SECRET_KEY'],
                                       algorithms=['HS256'])['token']
-            return db.session.scalar(db.session.query(Token).filter_by(access_token=access_token))
+            return db.session.query(Token).filter_by(access_token=access_token).scalar()
         except jwt.PyJWTError:
             pass
 
@@ -75,6 +75,10 @@ class User(Updateable, db.Model):
 
     def __repr__(self):
         return '<User {}-{}>'.format(self.id, self.username)
+
+    @property
+    def url(self):
+        return url_for('users.get_user', user_id=self.id)
 
     @property
     def password(self):
@@ -122,20 +126,18 @@ class User(Updateable, db.Model):
                 'email': self.email
             },
             current_app.config['SECRET_KEY'],
-            algorithms='HS256'
+            algorithm='HS256'
         )
 
     @staticmethod
     def verify_reset_token(reset_token):
         try:
-            data = jwt.decode(
-                reset_token,
-                current_app.config['SECRET_KEY'],
-                algorithms=['HS256']
-            )
-        except jwt.PyJWKError:
+            data = jwt.decode(reset_token,
+                              current_app.config['SECRET_KEY'],
+                              algorithms=['HS256'])
+        except jwt.PyJWTError:
             return
-        return db.session.scalar(db.session.query(User).filter_by(email=data['email']))
+        return db.session.query(User).filter_by(email=data['email']).scalar()
 
 
 class Project(Updateable, db.Model):
@@ -147,16 +149,21 @@ class Project(Updateable, db.Model):
     deadline = db.Column(db.Date)
     created_at = db.Column(db.Date, default=date.today)
     budget = db.Column(db.DECIMAL)
+    expected_budget = db.Column(db.DECIMAL, default=0)
     total_cost_products = db.Column(db.DECIMAL)
     total_cost_members = db.Column(db.DECIMAL)
 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     members = db.relationship('Member', backref='project')
     tasks = db.relationship('Task', backref='project')
     products = db.relationship('Product', backref='project')
 
     def __repr__(self):
         return '<Project {}-{}-{}>'.format(self.id, self.name_project, self.user_id)
+
+    @property
+    def url(self):
+        return url_for('projects.get_project', project_id=self.id)
 
     def update_budget(self):
         self.calc_cost_total_member()
@@ -196,11 +203,15 @@ class Task(Updateable, db.Model):
     deadline = db.Column(db.Date)
     created_at = db.Column(db.Date, default=date.today)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
     members = db.relationship('Member', secondary=task_member, backref='tasks')
 
     def __repr__(self):
         return '<Task {}-{}-{}>'.format(self.id, self.name_task, self.deadline)
+
+    @property
+    def url(self):
+        return url_for('projects.tasks.get_task', project_id=self.project_id, task_id=self.id)
 
     def assign_member(self, member):
         if not self.has_member(member):
@@ -222,10 +233,14 @@ class Member(Updateable, db.Model):
     role = db.Column(db.String(255), nullable=False)
     salary = db.Column(db.Integer)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     def __repr__(self):
         return '<Member {}-{}-{}>'.format(self.id, self.name_member, self.role)
+
+    @property
+    def url(self):
+        return url_for('projects.members.get_member', project_id=self.project_id, member_id=self.id)
 
     def assign_task(self, task):
         if not self.has_task(task):
@@ -262,16 +277,21 @@ class Product(Updateable, db.Model):
     __tablename__ = "product"
 
     id = db.Column(db.Integer, primary_key=True)
-    name_product = db.Column(db.String(255), nullable=False)
+    name_product = db.Column(db.String(255), unique=True, nullable=False)
+    description_product = db.Column(db.String(500))
     cost = db.Column(db.Integer, nullable=False)
     license = db.Column(db.Boolean, nullable=False)
-    type = db.Column(db.Enum(ProductType), nullable=False)
+    type = db.Column(db.Enum(ProductType))
     amount = db.Column(db.Integer)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     def __repr__(self):
-        return '<Product {}-{}-{}>'.format(self.id, self.name_product, self.cost)
+        return '<Product {}-{}-{}-{}>'.format(self.id, self.name_product, self.type, self.cost)
+
+    @property
+    def url(self):
+        return url_for('projects.products.get_product', project_id=self.project_id, product_id=self.id)
 
     @staticmethod
     def calc_no_license_products_total_cost(project_id):
@@ -299,16 +319,14 @@ class Product(Updateable, db.Model):
 
     @staticmethod
     def calc_total_costs_by_type(project_id):
-        costs_by_type = db.session.query(
-            Product.type,
-            db.func.sum(Product.cost * Product.amount)
-        ).filter(
-            Product.project_id == project_id
-        ).group_by(
-            Product.type
-        ).all()
+        project = db.session.get(Project, project_id)
+        total_months = project.total_months()
+        products = project.products
 
         total_costs = {ptype.value: 0 for ptype in ProductType}
-        for ptype, total in costs_by_type:
-            total_costs[ptype.value] = total if total is not None else 0
+        for product in products:
+            cost = product.cost * product.amount
+            if product.license:
+                cost *= total_months
+            total_costs[product.type.value] += cost
         return total_costs
