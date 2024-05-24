@@ -29,7 +29,7 @@ def get_products(project_id):
 @products.route('/products', methods=['POST'])
 @authenticate(token_auth)
 @body(product_schema)
-@response(product_schema)
+@response(product_schema, 201)
 @other_responses({404: 'Project not found', 401: 'User not allowed'})
 def new_product(args, project_id):
     """Create a new Product"""
@@ -59,6 +59,7 @@ def get_product(project_id, product_id):
 
 @products.route('/products/<int:product_id>', methods=['PUT'])
 @authenticate(token_auth)
+@body(update_product_schema)
 @response(product_schema)
 @other_responses({404: 'Project or Product not found', 401: 'User not allowed'})
 def update_product(data, project_id, product_id):

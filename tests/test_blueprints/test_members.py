@@ -1,5 +1,3 @@
-from datetime import date
-
 import pytest
 
 invalid_members_id = [0, -1, 1.5, 99999999999999]
