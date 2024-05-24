@@ -94,7 +94,7 @@ def test_update_task_invalid_data(database_with_data, access_token_valid):
     """
     response = database_with_data.put('api/v1/projects/1/tasks/1', json={
         'name_task': 10.0,
-        'description_task': 100,
+        'description_task': True,
         'deadline': '12-2400-01',
     }, headers={'Authorization': f'Bearer {access_token_valid}'})
     assert response.status_code == 400

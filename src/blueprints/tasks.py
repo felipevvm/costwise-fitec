@@ -72,6 +72,7 @@ def update_task(data, project_id, task_id):
     task.update(data)
     db.session.add(task)
     db.session.commit()
+    project.update_budget()
     return task
 
 
