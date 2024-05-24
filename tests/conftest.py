@@ -56,6 +56,7 @@ def database_with_data(app_database):
         name_project='test_project',
         description_project='test_description',
         deadline=date.today() + timedelta(days=(31*6)),
+        expected_budget=10000,
         owner=user
     )
 

@@ -149,6 +149,7 @@ class Project(Updateable, db.Model):
     deadline = db.Column(db.Date)
     created_at = db.Column(db.Date, default=date.today)
     budget = db.Column(db.DECIMAL)
+    expected_budget = db.Column(db.DECIMAL, default=0)
     total_cost_products = db.Column(db.DECIMAL)
     total_cost_members = db.Column(db.DECIMAL)
 
@@ -283,7 +284,7 @@ class Product(Updateable, db.Model):
     type = db.Column(db.Enum(ProductType))
     amount = db.Column(db.Integer)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     def __repr__(self):
         return '<Product {}-{}-{}-{}>'.format(self.id, self.name_product, self.type, self.cost)

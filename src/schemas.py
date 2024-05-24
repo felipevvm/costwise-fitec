@@ -58,6 +58,7 @@ class ProjectSchema(ma.SQLAlchemyAutoSchema):
     deadline = ma.auto_field(required=True, validate=validate.Range(min=date.today()))
     created_at = ma.auto_field(dump_only=True)
     budget = ma.auto_field(dump_only=True)
+    expected_budget = ma.Number(validate=validate.Range(min=0))
     total_cost_products = ma.auto_field(dump_only=True)
     total_cost_members = ma.auto_field(dump_only=True)
 

@@ -50,6 +50,7 @@ def test_project_data(database_with_data):
     assert project.name_project == 'test_project'
     assert project.description_project == 'test_description'
     assert project.deadline == date.today() + timedelta(days=(31*6))
+    assert project.expected_budget == 10000
     assert project.owner.id == 1
 
 
