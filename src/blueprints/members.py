@@ -13,6 +13,19 @@ members_schema = MemberSchema(many=True)
 update_member_schema = MemberSchema(partial=True)
 
 
+@members.route('/members', methods=['GET'])
+@authenticate(token_auth)
+@response(members_schema)
+@other_responses({404: 'Project not found', 401: 'User not allowed'})
+def get_members(project_id):
+    """Return all Members"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    return project.members
+
+
 @members.route('/members', methods=['POST'])
 @authenticate(token_auth)
 @body(member_schema)
@@ -29,19 +42,6 @@ def new_members(args, project_id):
     db.session.commit()
     project.update_budget()
     return member
-
-
-@members.route('/members', methods=['GET'])
-@authenticate(token_auth)
-@response(members_schema)
-@other_responses({404: 'Project not found', 401: 'User not allowed'})
-def get_members(project_id):
-    """Return all Members"""
-    user = token_auth.current_user()
-    project = db.session.get(Project, project_id) or abort(404)
-    if not project.user_id == user.id:
-        abort(401)
-    return project.members
 
 
 @members.route('/members/<int:member_id>', methods=['GET'])

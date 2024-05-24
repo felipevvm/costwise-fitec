@@ -23,6 +23,15 @@ cost_products_by_type = CostProductTypeSchema()
 cost_members = CostMembersSchema()
 
 
+@projects.route('/projects', methods=['GET'])
+@authenticate(token_auth)
+@response(projects_schema)
+def get_projects():
+    """Return all user Projects"""
+    user = token_auth.current_user()
+    return Project.query.where(Project.user_id == user.id).all()
+
+
 @projects.route('/projects', methods=['POST'])
 @authenticate(token_auth)
 @body(project_schema)
@@ -34,15 +43,6 @@ def new_project(args):
     db.session.add(project)
     db.session.commit()
     return project
-
-
-@projects.route('/projects', methods=['GET'])
-@authenticate(token_auth)
-@response(projects_schema)
-def get_projects():
-    """Return all user Projects"""
-    user = token_auth.current_user()
-    return Project.query.where(Project.user_id == user.id).all()
 
 
 @projects.route('/projects/<int:project_id>', methods=['GET'])
