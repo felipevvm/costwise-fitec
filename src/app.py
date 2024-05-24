@@ -1,8 +1,9 @@
 import os
+import warnings
 
 from flask import Flask
 
-from .extensions import db, ma, af
+from .extensions import db, ma, af, mail, CORS
 
 URL_PREFIX = '/api/v1/'
 
@@ -23,12 +24,21 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    warnings.filterwarnings(
+        "ignore",
+        message="Multiple schemas resolved to the name ",
+    )
+
     # Extensions
     db.init_app(app)
     ma.init_app(app)
     af.init_app(app)
+    mail.init_app(app)
+    CORS.init_app(app)
 
     # Blueprints
+    from .blueprints.errors import errors
+    app.register_blueprint(errors)
     from .blueprints.users import users
     app.register_blueprint(users, url_prefix=URL_PREFIX)
     from .blueprints.tokens import tokens

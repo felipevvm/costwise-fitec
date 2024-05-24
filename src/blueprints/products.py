@@ -13,23 +13,6 @@ products_schema = ProductSchema(many=True)
 update_product_schema = ProductSchema(partial=True)
 
 
-@products.route('/products', methods=['POST'])
-@authenticate(token_auth)
-@body(product_schema)
-@response(product_schema)
-@other_responses({404: 'Project not found', 401: 'User not allowed'})
-def new_product(args, project_id):
-    """Create a new Product"""
-    user = token_auth.current_user()
-    project = db.session.get(Project, project_id) or abort(404)
-    if not project.user_id == user.id:
-        abort(401)
-    product = Product(project=project, **args)
-    db.session.add(product)
-    db.session.commit()
-    return product
-
-
 @products.route('/products', methods=['GET'])
 @authenticate(token_auth)
 @response(products_schema)
@@ -41,6 +24,24 @@ def get_products(project_id):
     if not project.user_id == user.id:
         abort(401)
     return project.products
+
+
+@products.route('/products', methods=['POST'])
+@authenticate(token_auth)
+@body(product_schema)
+@response(product_schema, 201)
+@other_responses({404: 'Project not found', 401: 'User not allowed'})
+def new_product(args, project_id):
+    """Create a new Product"""
+    user = token_auth.current_user()
+    project = db.session.get(Project, project_id) or abort(404)
+    if not project.user_id == user.id:
+        abort(401)
+    product = Product(project=project, **args)
+    db.session.add(product)
+    db.session.commit()
+    project.update_budget()
+    return product
 
 
 @products.route('/products/<int:product_id>', methods=['GET'])
@@ -58,6 +59,7 @@ def get_product(project_id, product_id):
 
 @products.route('/products/<int:product_id>', methods=['PUT'])
 @authenticate(token_auth)
+@body(update_product_schema)
 @response(product_schema)
 @other_responses({404: 'Project or Product not found', 401: 'User not allowed'})
 def update_product(data, project_id, product_id):
@@ -70,6 +72,7 @@ def update_product(data, project_id, product_id):
     product.update(data)
     db.session.add(product)
     db.session.commit()
+    project.update_budget()
     return product
 
 
@@ -86,4 +89,5 @@ def delete_product(project_id, product_id):
     product = db.session.get(Product, product_id) or abort(404)
     db.session.delete(product)
     db.session.commit()
+    project.update_budget()
     return {}

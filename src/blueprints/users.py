@@ -4,12 +4,12 @@ from apifairy import authenticate, response, body, other_responses
 from src.extensions import db
 from src.auth import token_auth
 from src.models import User
-from src.schemas import UserSchema, EmptySchema
+from src.schemas import AllUsersSchema, UserSchema, EmptySchema
 
 users = Blueprint('users', __name__)
 
 user_schema = UserSchema()
-users_schema = UserSchema(many=True)
+users_schema = AllUsersSchema(many=True)
 update_user_schema = UserSchema(partial=True)
 
 
@@ -32,6 +32,7 @@ def new_user(args):
 
 
 @users.route('/users/<int:user_id>', methods=['GET'])
+@authenticate(token_auth)
 @response(user_schema)
 @other_responses({404: 'User not found'})
 def get_user(user_id):
@@ -57,7 +58,7 @@ def update_user(data):
 @response(EmptySchema, 204, description='User deleted')
 @other_responses({404: 'User not found'})
 def delete_user():
-    """Delete a User by id"""
+    """Delete a User"""
     user = token_auth.current_user() or abort(404)
     db.session.delete(user)
     db.session.commit()
