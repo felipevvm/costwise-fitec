@@ -18,6 +18,24 @@ def test_get_users(database_with_data):
     assert len(response.json) == 1
 
 
+def test_new_user(database_with_data):
+    """
+    Given the endpoint /users,
+    When the method is POST and the user provides valid data,
+    Then the user should receive a 201 status code and the new user data.
+    """
+    response = database_with_data.post('api/v1/users', json={
+        'username': 'test2',
+        'email': 'test2@test2.com',
+        'password': 'test2'
+    })
+    assert response.status_code == 201
+    assert response.json['id'] == 2
+    assert response.json['email'] == 'test2@test2.com'
+    assert response.json['username'] == 'test2'
+    assert db.session.get(User, 2).verify_password('test2')
+
+
 def test_get_user(database_with_data, access_token_valid):
     """
     Given the protected endpoint /users/<user_id>,

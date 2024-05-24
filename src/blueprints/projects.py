@@ -35,7 +35,7 @@ def get_projects():
 @projects.route('/projects', methods=['POST'])
 @authenticate(token_auth)
 @body(project_schema)
-@response(project_schema)
+@response(project_schema, 201)
 def new_project(args):
     """Create a new Project"""
     user = token_auth.current_user()

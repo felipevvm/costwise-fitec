@@ -22,7 +22,7 @@ def test_new_project(database_with_data, access_token_valid):
     """
     Given the protected endpoint /projects,
     When the method is POST and the user provides valid data,
-    Then the user should receive a 200 status code and the new project data.
+    Then the user should receive a 201 status code and the new project data.
     """
     response = database_with_data.post('api/v1/projects', json={
         'name_project': 'test_project',
@@ -30,12 +30,14 @@ def test_new_project(database_with_data, access_token_valid):
         'deadline': '2024-12-31',
         'expected_budget': 10000,
     }, headers={'Authorization': f'Bearer {access_token_valid}'})
-    assert response.status_code == 200
+    assert response.status_code == 201
+    assert response.json['id'] == 2
     assert response.json['name_project'] == 'test_project'
     assert response.json['description_project'] == 'test_description'
     assert response.json['deadline'] == '2024-12-31'
     assert response.json['created_at'] == date.today().isoformat()
-    assert float(response.json['expected_budget']) == 10000
+    assert response.json['expected_budget'] == 10000
+    assert response.json['user_id'] == 1
 
 
 def test_get_project(database_with_data, access_token_valid):
@@ -52,7 +54,7 @@ def test_get_project(database_with_data, access_token_valid):
     assert response.json['description_project'] == 'test_description'
     assert response.json['deadline'] == '2024-11-26'
     assert response.json['created_at'] == date.today().isoformat()
-    assert float(response.json['expected_budget']) == 10000
+    assert response.json['expected_budget'] == 10000
 
 
 @pytest.mark.parametrize('project_id', invalid_projects_id)
@@ -84,7 +86,7 @@ def test_update_project(database_with_data, access_token_valid):
     assert response.json['description_project'] == 'test_description2'
     assert response.json['deadline'] == '2024-12-31'
     assert response.json['created_at'] == date.today().isoformat()
-    assert float(response.json['expected_budget']) == 20000
+    assert response.json['expected_budget'] == 20000
 
 
 def test_update_project_invalid_data(database_with_data, access_token_valid):
