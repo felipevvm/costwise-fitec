@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -52,7 +52,7 @@ def test_get_project(database_with_data, access_token_valid):
     assert response.json['id'] == 1
     assert response.json['name_project'] == 'test_project'
     assert response.json['description_project'] == 'test_description'
-    assert response.json['deadline'] == '2024-11-26'
+    assert response.json['deadline'] == (date.today() + timedelta(days=(31*6))).isoformat()
     assert response.json['created_at'] == date.today().isoformat()
     assert response.json['expected_budget'] == 10000
 
