@@ -8,7 +8,7 @@ DEBUG = os.environ.get('DEBUG') == 'True'
 SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev'
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'dev'
 
-SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqllite:///database.db'
+SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI') or 'sqllite:///database.db'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 ACCESS_TOKEN_MINUTES = int(os.environ.get('ACCESS_TOKEN_MINUTES') or '15')
