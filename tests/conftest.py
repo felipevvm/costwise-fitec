@@ -12,6 +12,7 @@ def app():
     app = create_app({
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite://',
+        'REFRESH_TOKEN_IN_BODY': 'True',
         'MAIL_USERNAME': 'test',
         'MAIL_PASSWORD': 'test',
         'MAIL_DEFAULT_SENDER': 'test@test.com',

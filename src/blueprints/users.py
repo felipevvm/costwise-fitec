@@ -40,6 +40,15 @@ def get_user(user_id):
     return db.session.get(User, user_id) or abort(404)
 
 
+@users.route('/users/me', methods=['GET'])
+@authenticate(token_auth)
+@response(user_schema)
+@other_responses({404: 'User not found'})
+def get_current_user():
+    """Return the current User"""
+    return token_auth.current_user() or abort(404)
+
+
 @users.route('/users', methods=['PUT'])
 @authenticate(token_auth)
 @body(update_user_schema)
