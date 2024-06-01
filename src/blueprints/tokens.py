@@ -1,5 +1,6 @@
-from flask import Blueprint, abort, current_app, request
+from flask import Blueprint, abort, current_app, request, url_for
 from apifairy import authenticate, response, other_responses, body
+from werkzeug.http import dump_cookie
 
 from src.extensions import db
 from src.auth import basic_auth, token_auth
@@ -14,6 +15,15 @@ reset_schema = PasswordResetSchema()
 
 
 def token_response(token):
+    headers = {}
+    if current_app.config['REFRESH_TOKEN_IN_COOKIE']:
+        headers['Set-Cookie'] = dump_cookie(
+            'refresh_token',
+            token.refresh_token,
+            path=url_for('tokens.new_tokens'),
+            secure=True,
+            httponly=True,
+        )
     return {
         'access_token': token.access_token_jwt,
         'refresh_token': token.refresh_token if current_app.config['REFRESH_TOKEN_IN_BODY'] else None
@@ -41,7 +51,7 @@ def new_tokens():
 def refresh_access_token(args):
     """Refresh an Access token"""
     access_token_jwt = args['access_token']
-    refresh_token = args.get('refresh_token')
+    refresh_token = args.get('refresh_token', request.cookies.get('refresh_token'))
     if not access_token_jwt or not refresh_token:
         abort(401)
     token = User.verify_refresh_token(refresh_token, access_token_jwt)
@@ -79,7 +89,8 @@ def request_reset(args):
     user = db.session.query(User).filter_by(email=args['email']).scalar() or abort(404)
     if user is not None:
         reset_token = user.generate_reset_token()
-        send_email(args['email'], user.username, reset_token)
+        reset_url = current_app.config['PASSWORD_RESET_URL'] + f'?token={reset_token}'
+        send_email(args['email'], user.username, reset_url)
     return {}
 
 

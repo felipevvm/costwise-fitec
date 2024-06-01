@@ -1,7 +1,7 @@
 import os
 import warnings
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 
 from .extensions import db, ma, af, mail, CORS
 
@@ -14,15 +14,8 @@ def create_app(test_config=None):
     # Config
     app.config.from_object('config')
 
-    if test_config is None:
-        app.config.from_pyfile('config.py', silent=True)
-    else:
+    if test_config is not None:
         app.config.from_mapping(test_config)
-
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
 
     warnings.filterwarnings(
         "ignore",
@@ -45,5 +38,9 @@ def create_app(test_config=None):
     app.register_blueprint(tokens, url_prefix=URL_PREFIX)
     from .blueprints.projects import projects
     app.register_blueprint(projects, url_prefix=URL_PREFIX)
+
+    @app.route('/')
+    def index():  # pragma: no cover
+        return redirect('/docs')
 
     return app

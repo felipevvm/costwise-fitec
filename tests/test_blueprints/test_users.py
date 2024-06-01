@@ -36,6 +36,19 @@ def test_new_user(database_with_data):
     assert db.session.get(User, 2).verify_password('test2')
 
 
+def test_get_current_user(database_with_data, access_token_valid):
+    """
+    Given the protected endpoint /users/me,
+    When the method is GET,
+    Then the user should receive a 200 status code and the auth user's data.
+    """
+    response = database_with_data.get('api/v1/users/me', headers={'Authorization': f'Bearer {access_token_valid}'})
+
+    assert response.status_code == 200
+    assert response.json['id'] == 1
+    assert response.json['username'] == 'test1'
+
+
 def test_get_user(database_with_data, access_token_valid):
     """
     Given the protected endpoint /users/<user_id>,
