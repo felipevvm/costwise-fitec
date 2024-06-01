@@ -16,7 +16,7 @@ class TokenSchema(ma.Schema):
         ordered = True
 
     access_token = ma.String(required=True)
-    refresh_token = ma.String(required=True)
+    refresh_token = ma.String()
 
 
 class AllUsersSchema(ma.SQLAlchemySchema):

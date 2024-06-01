@@ -1,9 +1,8 @@
-import os
 import warnings
 
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect
 
-from .extensions import db, ma, af, mail, CORS
+from .extensions import db, ma, af, mail, cors
 
 URL_PREFIX = '/api/v1/'
 
@@ -27,7 +26,7 @@ def create_app(test_config=None):
     ma.init_app(app)
     af.init_app(app)
     mail.init_app(app)
-    CORS.init_app(app)
+    cors.init_app(app)
 
     # Blueprints
     from .blueprints.errors import errors

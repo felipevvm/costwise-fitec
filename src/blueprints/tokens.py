@@ -21,13 +21,13 @@ def token_response(token):
             'refresh_token',
             token.refresh_token,
             path=url_for('tokens.new_tokens'),
-            secure=True,
-            httponly=True,
+            secure=not current_app.config['DEBUG'],
+            httponly=not current_app.config['DEBUG'],
         )
     return {
         'access_token': token.access_token_jwt,
         'refresh_token': token.refresh_token if current_app.config['REFRESH_TOKEN_IN_BODY'] else None
-    }, 200
+    }, 200, headers
 
 
 @tokens.route('/tokens', methods=['POST'])
@@ -57,6 +57,7 @@ def refresh_access_token(args):
     token = User.verify_refresh_token(refresh_token, access_token_jwt)
     if not token:
         abort(401)
+    token.expire()
     new_token = token.user.generate_auth_token()
     db.session.add_all([token, new_token])
     db.session.commit()
