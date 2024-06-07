@@ -7,7 +7,6 @@
 
  O Arquivo de config do Flask preencher algumas dessas variaveis como default se não forem adicionadas.
 
- ## Crie um venv 
 ## Crie um venv
 Para criar um ambiente virtual (venv) no Python, siga os seguintes passos:
 
