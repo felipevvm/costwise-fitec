@@ -60,3 +60,8 @@ flask --app src run --debug
 ```
 
 Quando abri o servidor você sera redirecionado para o endpoint /docs, nele todos os endpoints estão documentados e podem se executados.
+
+Rode o comando abaixo se deseja executar os testes desse projeto:
+```
+pytest
+```
